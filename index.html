@@ -191,9 +191,11 @@ body{font-family:'IBM Plex Sans',sans-serif;background:#0d0f0e;color:#e8e4dc;min
   <div id="page-history" class="page">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div class="section-label" style="margin:0">History</div>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
         <input id="histSearch" placeholder="Filter…" oninput="renderHistory()" style="background:var(--s1);border:1px solid #1e2820;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none;width:120px"/>
         <button class="btn btn-gold btn-sm" onclick="exportCSV()">Export CSV</button>
+        <button class="btn btn-gold btn-sm" onclick="backupToGitHub()">Backup to GitHub</button>
+        <button class="btn btn-outline btn-sm" onclick="restoreFromGitHub()">Restore from GitHub</button>
       </div>
     </div>
     <div id="historyList"></div>
@@ -513,6 +515,79 @@ function exportCSV(){
   a.href=url;a.download='euchre_games.csv';a.click();
   URL.revokeObjectURL(url);
   showToast('CSV exported');
+}
+
+const GH_OWNER='joshcohn27', GH_REPO='euchre', GH_PATH='backup/games-backup.json', GH_BRANCH='main';
+function getGitHubToken(){
+  let t=localStorage.getItem('ghToken');
+  if(!t){
+    t=(prompt('Enter your GitHub personal access token:')||'').trim();
+    if(t)localStorage.setItem('ghToken',t);
+  }
+  return t||null;
+}
+function b64Encode(str){
+  const bytes=new TextEncoder().encode(str);
+  let binary='';
+  for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
+  return btoa(binary);
+}
+function b64Decode(str){
+  const binary=atob(str);
+  const bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+function ghHeaders(token){
+  return {'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'};
+}
+async function backupToGitHub(){
+  const token=getGitHubToken();
+  if(!token){showToast('GitHub token required');return}
+  const apiUrl=`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}`;
+  try{
+    const all=await dbGetAll();
+    const json=JSON.stringify(all,null,2);
+    let sha=null;
+    const getRes=await fetch(apiUrl+'?ref='+GH_BRANCH,{headers:ghHeaders(token)});
+    if(getRes.ok)sha=(await getRes.json()).sha;
+    const putRes=await fetch(apiUrl,{
+      method:'PUT',
+      headers:ghHeaders(token),
+      body:JSON.stringify({
+        message:'Backup euchre games — '+new Date().toISOString(),
+        content:b64Encode(json),
+        branch:GH_BRANCH,
+        ...(sha?{sha}:{})
+      })
+    });
+    if(!putRes.ok)throw new Error('GitHub API error '+putRes.status);
+    showToast('Backed up to GitHub');
+  }catch(err){showToast('Backup failed: '+err.message)}
+}
+async function restoreFromGitHub(){
+  const token=getGitHubToken();
+  if(!token){showToast('GitHub token required');return}
+  const apiUrl=`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}`;
+  try{
+    const res=await fetch(apiUrl+'?ref='+GH_BRANCH,{headers:ghHeaders(token)});
+    if(!res.ok)throw new Error('GitHub API error '+res.status);
+    const file=await res.json();
+    const remote=JSON.parse(b64Decode(file.content.replace(/\n/g,'')));
+    const existingIds=new Set(games.map(g=>g.id));
+    let added=0;
+    for(const g of remote){
+      if(existingIds.has(g.id))continue;
+      await dbPut(g);
+      games.push(g);
+      added++;
+    }
+    if(added){
+      games.sort((a,b)=>b.ts-a.ts);
+      updateBanner();renderHistory();renderStats();
+    }
+    showToast(added?`Restored ${added} game${added===1?'':'s'} from GitHub`:'Already up to date');
+  }catch(err){showToast('Restore failed: '+err.message)}
 }
 
 function showStatTab(tab){
