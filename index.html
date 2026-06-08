@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Euchre"/>
+<meta name="theme-color" content="#0d0f0e"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon.png"/>
+<title>Euchre Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:#0d0f0e;color:#e8e4dc;min-height:100vh}
+:root{
+  --g1:#152318;--g2:#1d3526;--g3:#2d6a45;--g4:#3d9e65;
+  --gold:#c8a84b;--gold2:#e8c96a;--golddim:#7a6128;
+  --s1:#111416;--s2:#181d20;--s3:#222b30;--s4:#2d3940;
+  --text:#e8e4dc;--muted:#7a7a7a;--dim:#3a3a3a;
+  --redl:#e74c3c;--r:8px;--rl:13px;
+}
+.app{max-width:700px;margin:0 auto;padding:16px;padding-bottom:40px}
+.header{text-align:center;padding:22px 0 18px}
+.header h1{font-size:30px;font-weight:700;letter-spacing:-0.5px;color:var(--gold)}
+.header h1 span{color:#e8e4dc}
+.nav{display:flex;gap:4px;background:var(--s1);border-radius:var(--rl);padding:4px;margin-bottom:18px;border:1px solid #1e2820}
+.nav button{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:var(--r);transition:all 0.15s}
+.nav button.active{background:var(--g3);color:#fff}
+.nav button:hover:not(.active){background:var(--s2);color:var(--text)}
+.page{display:none}.page.active{display:block}
+.card{background:var(--s1);border:1px solid #1e2820;border-radius:var(--rl);padding:16px;margin-bottom:12px}
+.card h3{font-size:11px;font-weight:700;color:var(--gold);margin-bottom:14px;letter-spacing:1.5px;text-transform:uppercase;font-family:'IBM Plex Mono',monospace}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:5px;font-family:'IBM Plex Mono',monospace}
+.field input{width:100%;background:var(--s2);border:1px solid #253028;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none;transition:border-color 0.15s}
+.field input:focus{border-color:var(--g3)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stakes-row{display:flex;align-items:center;gap:8px}
+.stakes-row input{flex:1;background:var(--s2);border:1px solid #253028;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:16px;padding:9px 12px;border-radius:var(--r);outline:none;text-align:center;transition:border-color 0.15s}
+.stakes-row input:focus{border-color:var(--g3)}
+.stakes-slash{font-size:22px;font-weight:700;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.player-wrap{position:relative}
+.player-input{width:100%;background:var(--s2);border:1px solid #253028;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none;transition:border-color 0.15s}
+.player-input:focus{border-color:var(--g3)}
+.player-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s3);border:1px solid #2d3940;border-radius:var(--r);z-index:50;overflow:hidden;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
+.player-dropdown.open{display:block}
+.pd-item{padding:9px 12px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background 0.1s}
+.pd-item:hover,.pd-item:active{background:var(--s4)}
+.pd-dot{width:6px;height:6px;border-radius:50%;background:var(--g4);flex-shrink:0}
+.outcome-row{display:flex;gap:8px}
+.outcome-btn{flex:1;padding:16px 12px;border:2px solid #2a3540;border-radius:var(--r);background:var(--s2);color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.outcome-btn.win{border-color:#3d9e65;background:#1a3a25;color:#4caf72;box-shadow:inset 0 0 0 1px #2d6a45}
+.outcome-btn.loss{border-color:#c0392b;background:#3a1515;color:#ef5350;box-shadow:inset 0 0 0 1px #8b2222}
+.action-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px}
+.action-btn{padding:22px 8px;border:none;border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;text-align:center;line-height:1.3}
+.action-btn:active{transform:scale(0.97)}
+.action-btn-primary{background:var(--g3);color:#fff}.action-btn-primary:hover{background:var(--g4)}
+.action-btn-outline{background:var(--s2);color:var(--text);border:1px solid #2d3940}.action-btn-outline:hover{background:var(--s3)}
+.action-btn-gold{background:var(--golddim);color:var(--gold2);border:1px solid #5a4520}.action-btn-gold:hover{background:#5a4520}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border:none;border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.btn-primary{background:var(--g3);color:#fff}.btn-primary:hover{background:var(--g4)}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid #2d3940}.btn-outline:hover{background:var(--s3);color:var(--text)}
+.btn-danger{background:#2a1515;color:var(--redl);border:1px solid #3a1a1a}.btn-danger:hover{background:#3a1515}
+.btn-gold{background:var(--golddim);color:var(--gold2);border:1px solid #5a4520}.btn-gold:hover{background:#5a4520}
+.btn-sm{padding:6px 11px;font-size:12px}
+.tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.tag-win{background:#1a3a20;color:#4caf72}.tag-loss{background:#3a1515;color:#ef5350}
+.robin-badge{display:inline-flex;align-items:center;gap:4px;background:#1a2a3a;border:1px solid #2a4a6a;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700;color:#60a8e0;font-family:'IBM Plex Mono',monospace}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-bottom:13px}
+.stat-box{background:var(--s2);border:1px solid #1e2820;border-radius:var(--r);padding:13px;text-align:center}
+.stat-box .val{font-size:22px;font-weight:700;color:var(--gold);font-family:'IBM Plex Mono',monospace;line-height:1}
+.stat-box .val.green{color:#4caf72}.stat-box .val.red{color:#ef5350}
+.stat-box .lbl{font-size:10px;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;margin-top:5px;font-family:'IBM Plex Mono',monospace}
+.stat-section{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1.2px;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid #1e2820}
+.game-item{background:var(--s1);border:1px solid #1e2820;border-radius:var(--r);padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:border-color 0.15s}
+.game-item:hover,.game-item:active{border-color:var(--g3)}
+.gi-top{display:flex;justify-content:space-between;align-items:flex-start}
+.gi-names{font-size:13px;font-weight:600;margin-top:3px}
+.gi-meta{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:3px}
+.gi-amt{font-size:14px;font-weight:700;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.gi-amt.pos{color:#4caf72}.gi-amt.neg{color:#ef5350}.gi-amt.zero{color:var(--muted)}
+.sess-header{background:var(--g1);border:1px solid #1e3825;border-radius:var(--r);padding:9px 13px;margin-bottom:5px;margin-top:13px;display:flex;justify-content:space-between;align-items:center}
+.sh-name{font-size:12px;font-weight:700;color:var(--gold)}
+.sh-meta{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.sh-net{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.lb-row{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:var(--s2);border-radius:var(--r);margin-bottom:6px}
+.lb-name{font-size:14px;font-weight:600}
+.lb-sub{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.lb-net{font-size:14px;font-weight:700;font-family:'IBM Plex Mono',monospace;text-align:right}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--s2);border:1px solid var(--g3);border-radius:var(--rl);padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:17px;font-weight:700;color:var(--gold);margin-bottom:16px}
+.modal-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.modal .field input{background:var(--s3);border-color:#2d3940}
+.modal .stakes-row input{background:var(--s3);border-color:#2d3940}
+.banner{background:var(--g1);border:1px solid var(--g3);border-radius:var(--r);padding:10px 13px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.banner-title{font-size:13px;font-weight:600;color:var(--gold)}
+.banner-text{font-size:12px;color:var(--g4);font-family:'IBM Plex Mono',monospace}
+.empty{text-align:center;padding:44px 20px;color:var(--muted)}
+.empty .big{font-size:28px;margin-bottom:8px}
+.empty p{font-size:14px;line-height:1.6}
+.tabs-inner{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.tab-inner{padding:6px 11px;border:none;background:transparent;color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border-radius:var(--r);transition:all 0.15s;text-transform:uppercase;letter-spacing:0.3px}
+.tab-inner.active{background:var(--s3);color:var(--text)}
+.section-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-family:'IBM Plex Mono',monospace}
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--g3);color:#fff;padding:9px 18px;border-radius:var(--r);font-size:13px;font-weight:600;z-index:200;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header"><h1>♠ Euchre<span>Tracker</span></h1></div>
+  <nav class="nav">
+    <button class="active" onclick="showPage('log')">Log Game</button>
+    <button onclick="showPage('history')">History</button>
+    <button onclick="showPage('stats')">Stats</button>
+  </nav>
+
+  <!-- LOG -->
+  <div id="page-log" class="page active">
+    <div id="sessBanner" style="display:none" class="banner">
+      <div><div class="banner-title" id="sessTitle"></div><div class="banner-text" id="sessMeta"></div></div>
+      <button class="btn btn-outline btn-sm" onclick="endSession()">End</button>
+    </div>
+    <div class="card">
+      <h3>Players</h3>
+      <div class="field">
+        <label>Your partner</label>
+        <div class="player-wrap">
+          <input class="player-input" id="partner" placeholder="Partner name" autocomplete="off" oninput="onPlayerInput(this,'partnerDrop')" onfocus="onPlayerFocus(this,'partnerDrop')" onblur="onPlayerBlur('partnerDrop')"/>
+          <div class="player-dropdown" id="partnerDrop"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Opponent 1</label>
+          <div class="player-wrap">
+            <input class="player-input" id="opp1" placeholder="Name" autocomplete="off" oninput="onPlayerInput(this,'opp1Drop')" onfocus="onPlayerFocus(this,'opp1Drop')" onblur="onPlayerBlur('opp1Drop')"/>
+            <div class="player-dropdown" id="opp1Drop"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Opponent 2</label>
+          <div class="player-wrap">
+            <input class="player-input" id="opp2" placeholder="Name" autocomplete="off" oninput="onPlayerInput(this,'opp2Drop')" onfocus="onPlayerFocus(this,'opp2Drop')" onblur="onPlayerBlur('opp2Drop')"/>
+            <div class="player-dropdown" id="opp2Drop"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Result</h3>
+      <div class="field">
+        <label>Outcome</label>
+        <div class="outcome-row">
+          <button class="outcome-btn" id="btnWin" onclick="setOutcome('win')">WIN</button>
+          <button class="outcome-btn" id="btnLoss" onclick="setOutcome('loss')">LOSS</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Stakes (per game / per bump)</label>
+        <div class="stakes-row">
+          <input id="stake1" type="number" min="0" step="0.25" placeholder="4"/>
+          <span class="stakes-slash">/</span>
+          <input id="stake2" type="number" min="0" step="0.25" placeholder="4"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Amount won / lost ($)</label>
+        <input id="amount" type="number" step="0.25" placeholder="0.00" style="background:var(--s2);border:1px solid #253028;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:15px;padding:9px 12px;border-radius:var(--r);outline:none;width:100%;transition:border-color 0.15s"/>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Notes (optional)</label>
+        <input id="notes" placeholder="Anything worth remembering" style="background:var(--s2);border:1px solid #253028;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none;width:100%;transition:border-color 0.15s"/>
+      </div>
+    </div>
+    <div class="action-grid">
+      <button class="action-btn action-btn-primary" onclick="logGame(false)">Log Game</button>
+      <button class="action-btn action-btn-outline" onclick="logGame(true)">+ Continue Session</button>
+      <button class="action-btn action-btn-gold" onclick="startRobin()">⟳ Round Robin</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="page-history" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="section-label" style="margin:0">History</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="histSearch" placeholder="Filter…" oninput="renderHistory()" style="background:var(--s1);border:1px solid #1e2820;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none;width:120px"/>
+        <button class="btn btn-gold btn-sm" onclick="exportCSV()">Export CSV</button>
+      </div>
+    </div>
+    <div id="historyList"></div>
+  </div>
+
+  <!-- STATS -->
+  <div id="page-stats" class="page">
+    <div class="tabs-inner">
+      <button class="tab-inner active" onclick="showStatTab('overall')">Overall</button>
+      <button class="tab-inner" onclick="showStatTab('partners')">Partners</button>
+      <button class="tab-inner" onclick="showStatTab('opponents')">Opponents</button>
+      <button class="tab-inner" onclick="showStatTab('sessions')">Sessions</button>
+    </div>
+    <div id="statsContent"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModalOut(event)">
+  <div class="modal" id="modalBody"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let DB, games=[], currentSession=null, currentOutcome=null, activeStatTab='overall';
+let robinMode=false, robinGames=[];
+
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open('euchrePro',4);
+    r.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains('games'))db.createObjectStore('games',{keyPath:'id',autoIncrement:true});
+    };
+    r.onsuccess=e=>res(e.target.result);
+    r.onerror=rej;
+  });
+}
+function dbGetAll(){return new Promise(res=>{DB.transaction('games','readonly').objectStore('games').getAll().onsuccess=e=>res(e.target.result)})}
+function dbPut(data){return new Promise(res=>{DB.transaction('games','readwrite').objectStore('games').put(data).onsuccess=e=>res(e.target.result)})}
+function dbDelete(id){return new Promise(res=>{DB.transaction('games','readwrite').objectStore('games').delete(id).onsuccess=res})}
+
+async function loadAll(){
+  games=await dbGetAll();
+  games.sort((a,b)=>b.ts-a.ts);
+  renderHistory();renderStats();updateBanner();
+}
+
+function knownPlayers(){
+  const s=new Set();
+  games.forEach(g=>{s.add(g.partner);s.add(g.opp1);s.add(g.opp2)});
+  return [...s].sort();
+}
+function onPlayerInput(inp,dropId){
+  const val=inp.value.trim().toLowerCase();
+  renderDrop(dropId,val?knownPlayers().filter(p=>p.toLowerCase().includes(val)):knownPlayers(),inp);
+}
+function onPlayerFocus(inp,dropId){
+  const val=inp.value.trim().toLowerCase();
+  renderDrop(dropId,val?knownPlayers().filter(p=>p.toLowerCase().includes(val)):knownPlayers(),inp);
+}
+function onPlayerBlur(dropId){setTimeout(()=>document.getElementById(dropId).classList.remove('open'),150)}
+function renderDrop(dropId,matches,inp){
+  const d=document.getElementById(dropId);
+  if(!matches.length){d.classList.remove('open');return}
+  d.innerHTML=matches.slice(0,6).map(p=>`<div class="pd-item" onmousedown="pickPlayer('${p.replace(/'/g,"\\'")}','${inp.id}','${dropId}')"><span class="pd-dot"></span>${p}</div>`).join('');
+  d.classList.add('open');
+}
+function pickPlayer(name,inputId,dropId){
+  document.getElementById(inputId).value=name;
+  document.getElementById(dropId).classList.remove('open');
+}
+
+function makeSessionName(){
+  const d=new Date();
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+}
+function updateBanner(){
+  const b=document.getElementById('sessBanner');
+  if(!currentSession){b.style.display='none';return}
+  b.style.display='flex';
+  document.getElementById('sessTitle').textContent=currentSession.name+(robinMode?' · Round Robin':'');
+  const g=games.filter(x=>x.sessionId===currentSession.id);
+  const wins=g.filter(x=>x.outcome==='win').length;
+  const net=g.reduce((a,x)=>a+x.amount,0);
+  document.getElementById('sessMeta').textContent=`${g.length}G · ${wins}W-${g.length-wins}L · ${formatAmt(net)}`;
+}
+function endSession(){currentSession=null;robinMode=false;robinGames=[];updateBanner();showToast('Session ended')}
+function startRobin(){
+  const p=document.getElementById('partner').value.trim();
+  const o1=document.getElementById('opp1').value.trim();
+  const o2=document.getElementById('opp2').value.trim();
+  if(!p||!o1||!o2){showToast('Fill in all 3 players first');return}
+  robinMode=true;robinGames=[];
+  if(!currentSession)currentSession={id:Date.now(),name:makeSessionName(),ts:Date.now()};
+  showToast('Round Robin started — log 3 games');updateBanner();
+}
+
+function setOutcome(o){
+  currentOutcome=o;
+  document.getElementById('btnWin').className='outcome-btn'+(o==='win'?' win':'');
+  document.getElementById('btnLoss').className='outcome-btn'+(o==='loss'?' loss':'');
+}
+
+async function logGame(continueSession){
+  const partner=document.getElementById('partner').value.trim();
+  const opp1=document.getElementById('opp1').value.trim();
+  const opp2=document.getElementById('opp2').value.trim();
+  const s1=parseFloat(document.getElementById('stake1').value)||0;
+  const s2=parseFloat(document.getElementById('stake2').value)||0;
+  const rawAmt=parseFloat(document.getElementById('amount').value)||0;
+  const notes=document.getElementById('notes').value.trim();
+  if(!partner){showToast('Enter partner name');return}
+  if(!opp1||!opp2){showToast('Enter both opponents');return}
+  if(!currentOutcome){showToast('Select WIN or LOSS');return}
+  const lastGame=games[0];
+  if(!continueSession&&!robinMode&&lastGame&&lastGame.partner!==partner)
+    currentSession={id:Date.now(),name:makeSessionName(),ts:Date.now()};
+  if(!currentSession)currentSession={id:Date.now(),name:makeSessionName(),ts:Date.now()};
+  const amount=currentOutcome==='win'?Math.abs(rawAmt):-Math.abs(rawAmt);
+  const game={ts:Date.now(),partner,opp1,opp2,outcome:currentOutcome,stake1:s1,stake2:s2,amount,notes,sessionId:currentSession.id,sessionName:currentSession.name,isRobin:robinMode};
+  const id=await dbPut(game);game.id=id;games.unshift(game);
+  if(robinMode){
+    robinGames.push(game);
+    if(robinGames.length>=3){showToast('Round Robin complete!');robinMode=false;robinGames=[];}
+    else showToast(`Robin game ${robinGames.length}/3 logged`);
+  } else showToast(currentOutcome==='win'?'Win logged':'Loss logged');
+  if(!continueSession&&!robinMode){
+    document.getElementById('partner').value='';
+    document.getElementById('opp1').value='';
+    document.getElementById('opp2').value='';
+  }
+  document.getElementById('amount').value='';
+  document.getElementById('notes').value='';
+  setOutcome(null);currentOutcome=null;
+  updateBanner();renderHistory();renderStats();
+}
+
+function formatDate(ts){return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function formatAmt(n){if(n===0)return'$0.00';return(n>0?'+':'-')+'$'+Math.abs(n).toFixed(2)}
+function formatStakes(g){
+  if(!g.stake1&&!g.stake2)return null;
+  if(g.stake1&&g.stake2)return`$${g.stake1}/$${g.stake2}`;
+  return g.stake1?`$${g.stake1}`:`$${g.stake2}`;
+}
+
+function renderHistory(){
+  const filter=(document.getElementById('histSearch')||{}).value?.toLowerCase()||'';
+  const list=document.getElementById('historyList');
+  const filtered=filter?games.filter(g=>[g.partner,g.opp1,g.opp2,g.notes||'',g.sessionName||''].some(x=>x.toLowerCase().includes(filter))):games;
+  if(!filtered.length){list.innerHTML=`<div class="empty"><div class="big">♠</div><p>No games yet.</p></div>`;return}
+  const bySess={};
+  filtered.forEach(g=>{
+    const k=g.sessionId||'solo';
+    if(!bySess[k])bySess[k]={name:g.sessionName||'Games',ts:g.ts,games:[]};
+    bySess[k].games.push(g);
+  });
+  let html='';
+  Object.entries(bySess).sort((a,b)=>b[1].ts-a[1].ts).forEach(([k,s])=>{
+    const wins=s.games.filter(g=>g.outcome==='win').length;
+    const net=s.games.reduce((a,g)=>a+g.amount,0);
+    const nc=net>0?'#4caf72':net<0?'#ef5350':'var(--muted)';
+    html+=`<div class="sess-header"><div><div class="sh-name">${s.name}</div><div class="sh-meta">${s.games.length}G · ${wins}W-${s.games.length-wins}L</div></div><div class="sh-net" style="color:${nc}">${formatAmt(net)}</div></div>`;
+    s.games.forEach(g=>{
+      const ac=g.amount>0?'pos':g.amount<0?'neg':'zero';
+      const stakes=formatStakes(g);
+      html+=`<div class="game-item" onclick="showDetail(${g.id})">
+        <div class="gi-top">
+          <div>
+            <div><span class="tag ${g.outcome==='win'?'tag-win':'tag-loss'}">${g.outcome.toUpperCase()}</span>${g.isRobin?' <span class="robin-badge">⟳ Robin</span>':''}</div>
+            <div class="gi-names">You & ${g.partner} vs ${g.opp1} & ${g.opp2}</div>
+            <div class="gi-meta">${formatDate(g.ts)}${stakes?' · '+stakes:''}</div>
+          </div>
+          <div class="gi-amt ${ac}">${formatAmt(g.amount)}</div>
+        </div>
+        ${g.notes?`<div style="font-size:11px;color:var(--muted);margin-top:5px;font-family:'IBM Plex Mono',monospace">${g.notes}</div>`:''}
+      </div>`;
+    });
+  });
+  list.innerHTML=html;
+}
+
+function showDetail(id){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  const stakes=formatStakes(g);
+  document.getElementById('modalBody').innerHTML=`
+    <h2>${g.outcome==='win'?'Win':'Loss'} · ${formatDate(g.ts)}</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px">
+      <div class="stat-box"><div class="val" style="font-size:15px;word-break:break-word">${g.partner}</div><div class="lbl">Your Partner</div></div>
+      <div class="stat-box"><div class="val ${g.amount>=0?'green':'red'}" style="font-size:18px">${formatAmt(g.amount)}</div><div class="lbl">Result</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:3px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.8px">Opponents</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:14px">${g.opp1} & ${g.opp2}</div>
+    ${stakes?`<div style="font-size:11px;color:var(--muted);margin-bottom:3px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.8px">Stakes</div><div style="font-size:14px;font-weight:600;margin-bottom:14px">${stakes}</div>`:''}
+    ${g.isRobin?`<div class="robin-badge" style="margin-bottom:14px">⟳ Round Robin game</div>`:''}
+    ${g.notes?`<div style="font-size:11px;color:var(--muted);margin-bottom:3px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.8px">Notes</div><div style="font-size:13px;margin-bottom:14px">${g.notes}</div>`:''}
+    <div style="font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;margin-bottom:16px">Session: ${g.sessionName||'—'}</div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" onclick="deleteGame(${g.id})">Delete</button>
+      <button class="btn btn-gold btn-sm" onclick="showEdit(${g.id})">Edit</button>
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="closeModal()">Close</button>
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+}
+
+function showEdit(id){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  document.getElementById('modalBody').innerHTML=`
+    <h2>Edit Game</h2>
+    <div class="field"><label>Your Partner</label>
+      <div class="player-wrap">
+        <input class="player-input" id="e_partner" value="${g.partner}" autocomplete="off" oninput="onPlayerInput(this,'e_partnerDrop')" onfocus="onPlayerFocus(this,'e_partnerDrop')" onblur="onPlayerBlur('e_partnerDrop')"/>
+        <div class="player-dropdown" id="e_partnerDrop"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Opponent 1</label>
+        <div class="player-wrap">
+          <input class="player-input" id="e_opp1" value="${g.opp1}" autocomplete="off" oninput="onPlayerInput(this,'e_opp1Drop')" onfocus="onPlayerFocus(this,'e_opp1Drop')" onblur="onPlayerBlur('e_opp1Drop')"/>
+          <div class="player-dropdown" id="e_opp1Drop"></div>
+        </div>
+      </div>
+      <div class="field"><label>Opponent 2</label>
+        <div class="player-wrap">
+          <input class="player-input" id="e_opp2" value="${g.opp2}" autocomplete="off" oninput="onPlayerInput(this,'e_opp2Drop')" onfocus="onPlayerFocus(this,'e_opp2Drop')" onblur="onPlayerBlur('e_opp2Drop')"/>
+          <div class="player-dropdown" id="e_opp2Drop"></div>
+        </div>
+      </div>
+    </div>
+    <div class="field"><label>Outcome</label>
+      <div class="outcome-row">
+        <button class="outcome-btn${g.outcome==='win'?' win':''}" id="e_btnWin" onclick="setEditOutcome('win')">WIN</button>
+        <button class="outcome-btn${g.outcome==='loss'?' loss':''}" id="e_btnLoss" onclick="setEditOutcome('loss')">LOSS</button>
+      </div>
+    </div>
+    <div class="field"><label>Stakes (per game / per bump)</label>
+      <div class="stakes-row">
+        <input id="e_stake1" type="number" min="0" step="0.25" value="${g.stake1||''}" placeholder="4"/>
+        <span class="stakes-slash">/</span>
+        <input id="e_stake2" type="number" min="0" step="0.25" value="${g.stake2||''}" placeholder="4"/>
+      </div>
+    </div>
+    <div class="field"><label>Amount ($)</label>
+      <input id="e_amount" type="number" step="0.25" value="${Math.abs(g.amount)||''}" placeholder="0.00" style="background:var(--s3);border:1px solid #2d3940;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:15px;padding:9px 12px;border-radius:var(--r);outline:none;width:100%"/>
+    </div>
+    <div class="field" style="margin-bottom:0"><label>Notes</label>
+      <input id="e_notes" value="${g.notes||''}" placeholder="Notes" style="background:var(--s3);border:1px solid #2d3940;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none;width:100%"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="showDetail(${id})">Cancel</button>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="saveEdit(${id})">Save</button>
+    </div>`;
+  window._editOutcome=g.outcome;
+}
+
+function setEditOutcome(o){
+  window._editOutcome=o;
+  document.getElementById('e_btnWin').className='outcome-btn'+(o==='win'?' win':'');
+  document.getElementById('e_btnLoss').className='outcome-btn'+(o==='loss'?' loss':'');
+}
+
+async function saveEdit(id){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  const partner=document.getElementById('e_partner').value.trim();
+  const opp1=document.getElementById('e_opp1').value.trim();
+  const opp2=document.getElementById('e_opp2').value.trim();
+  const s1=parseFloat(document.getElementById('e_stake1').value)||0;
+  const s2=parseFloat(document.getElementById('e_stake2').value)||0;
+  const rawAmt=parseFloat(document.getElementById('e_amount').value)||0;
+  const notes=document.getElementById('e_notes').value.trim();
+  const outcome=window._editOutcome||g.outcome;
+  if(!partner||!opp1||!opp2){showToast('All player fields required');return}
+  const amount=outcome==='win'?Math.abs(rawAmt):-Math.abs(rawAmt);
+  Object.assign(g,{partner,opp1,opp2,outcome,stake1:s1,stake2:s2,amount,notes});
+  await dbPut(g);
+  closeModal();renderHistory();renderStats();showToast('Game updated');
+}
+
+async function deleteGame(id){
+  if(!confirm('Delete this game?'))return;
+  await dbDelete(id);
+  games=games.filter(g=>g.id!==id);
+  closeModal();renderHistory();renderStats();showToast('Deleted');
+}
+function closeModal(){document.getElementById('modal').style.display='none'}
+function closeModalOut(e){if(e.target===document.getElementById('modal'))closeModal()}
+
+function exportCSV(){
+  if(!games.length){showToast('No games to export');return}
+  const headers=['Date','Session','Partner','Opp1','Opp2','Outcome','Stake(game)','Stake(bump)','Amount','Notes','RoundRobin'];
+  const rows=games.map(g=>[
+    new Date(g.ts).toLocaleString(),
+    (g.sessionName||'').replace(/,/g,';'),
+    g.partner,g.opp1,g.opp2,g.outcome,
+    g.stake1||0,g.stake2||0,
+    g.amount.toFixed(2),
+    (g.notes||'').replace(/,/g,';'),
+    g.isRobin?'yes':'no'
+  ].map(v=>`"${v}"`).join(','));
+  const csv=[headers.join(','),...rows].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='euchre_games.csv';a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exported');
+}
+
+function showStatTab(tab){
+  activeStatTab=tab;
+  document.querySelectorAll('.tab-inner').forEach((b,i)=>{
+    b.className='tab-inner'+(['overall','partners','opponents','sessions'][i]===tab?' active':'');
+  });
+  renderStats();
+}
+function renderStats(){
+  const el=document.getElementById('statsContent');
+  if(!games.length){el.innerHTML=`<div class="empty"><div class="big">♦</div><p>Log some games first.</p></div>`;return}
+  if(activeStatTab==='overall')el.innerHTML=renderOverall();
+  else if(activeStatTab==='partners')el.innerHTML=renderByRole('partner');
+  else if(activeStatTab==='opponents')el.innerHTML=renderByRole('opponents');
+  else el.innerHTML=renderSessions();
+}
+
+function renderOverall(){
+  const total=games.length;
+  const wins=games.filter(g=>g.outcome==='win').length;
+  const losses=total-wins;
+  const net=games.reduce((a,g)=>a+g.amount,0);
+  const winPct=total?Math.round(wins/total*100):0;
+  const winGames=games.filter(g=>g.amount>0);
+  const lossGames=games.filter(g=>g.amount<0);
+  const bigW=winGames.length?Math.max(...winGames.map(g=>g.amount)):0;
+  const bigL=lossGames.length?Math.min(...lossGames.map(g=>g.amount)):0;
+  const avgWin=winGames.length?winGames.reduce((a,g)=>a+g.amount,0)/winGames.length:0;
+  const avgLoss=lossGames.length?lossGames.reduce((a,g)=>a+g.amount,0)/lossGames.length:0;
+  const avgNet=total?net/total:0;
+  const stakeGames=games.filter(g=>g.stake1||g.stake2);
+  const avgS1=stakeGames.length?stakeGames.reduce((a,g)=>a+g.stake1,0)/stakeGames.length:0;
+  const avgS2=stakeGames.length?stakeGames.reduce((a,g)=>a+g.stake2,0)/stakeGames.length:0;
+  const sessIds=[...new Set(games.map(g=>g.sessionId))];
+  const sessNets=sessIds.map(sid=>games.filter(g=>g.sessionId===sid).reduce((a,g)=>a+g.amount,0));
+  const winSess=sessNets.filter(n=>n>0).length;
+  const sessPct=sessIds.length?Math.round(winSess/sessIds.length*100):0;
+  let curStreak=0,maxWStreak=0,maxLStreak=0,tmpW=0,tmpL=0;
+  const first=games[0]?.outcome;
+  for(const g of games){if(g.outcome===first)curStreak++;else break}
+  for(const g of [...games].reverse()){
+    if(g.outcome==='win'){tmpW++;tmpL=0;maxWStreak=Math.max(maxWStreak,tmpW)}
+    else{tmpL++;tmpW=0;maxLStreak=Math.max(maxLStreak,tmpL)}
+  }
+  const partnerMap={};
+  games.forEach(g=>{
+    if(!partnerMap[g.partner])partnerMap[g.partner]={w:0,l:0};
+    g.outcome==='win'?partnerMap[g.partner].w++:partnerMap[g.partner].l++;
+  });
+  const qualPartners=Object.entries(partnerMap).filter(([,v])=>v.w+v.l>=2);
+  const bestPartner=qualPartners.sort((a,b)=>(b[1].w/(b[1].w+b[1].l))-(a[1].w/(a[1].w+a[1].l)))[0];
+  const worstPartner=qualPartners.sort((a,b)=>(a[1].w/(a[1].w+a[1].l))-(b[1].w/(b[1].w+b[1].l)))[0];
+  const oppMap={};
+  games.forEach(g=>{[g.opp1,g.opp2].forEach(o=>{
+    if(!oppMap[o])oppMap[o]={w:0,l:0};
+    g.outcome==='win'?oppMap[o].w++:oppMap[o].l++;
+  })});
+  const qualOpps=Object.entries(oppMap).filter(([,v])=>v.w+v.l>=2);
+  const easiestOpp=qualOpps.sort((a,b)=>(b[1].w/(b[1].w+b[1].l))-(a[1].w/(a[1].w+a[1].l)))[0];
+  const toughestOpp=qualOpps.sort((a,b)=>(a[1].w/(a[1].w+a[1].l))-(b[1].w/(b[1].w+b[1].l)))[0];
+  const robinCount=games.filter(g=>g.isRobin).length;
+  const robinWins=games.filter(g=>g.isRobin&&g.outcome==='win').length;
+
+  return`
+  <div class="stat-section">Record</div>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="val">${total}</div><div class="lbl">Games</div></div>
+    <div class="stat-box"><div class="val green">${wins}</div><div class="lbl">Wins</div></div>
+    <div class="stat-box"><div class="val red">${losses}</div><div class="lbl">Losses</div></div>
+    <div class="stat-box"><div class="val">${winPct}%</div><div class="lbl">Win Rate</div></div>
+  </div>
+  <div class="stat-section">Money</div>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="val ${net>=0?'green':'red'}">${formatAmt(net)}</div><div class="lbl">Net All-Time</div></div>
+    <div class="stat-box"><div class="val" style="font-size:16px">${formatAmt(avgNet)}</div><div class="lbl">Avg Per Game</div></div>
+    <div class="stat-box"><div class="val green">${avgWin?formatAmt(avgWin):'—'}</div><div class="lbl">Avg Win</div></div>
+    <div class="stat-box"><div class="val red">${avgLoss?formatAmt(avgLoss):'—'}</div><div class="lbl">Avg Loss</div></div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="val green">${bigW?formatAmt(bigW):'—'}</div><div class="lbl">Biggest Win</div></div>
+    <div class="stat-box"><div class="val red">${bigL?formatAmt(bigL):'—'}</div><div class="lbl">Biggest Loss</div></div>
+    <div class="stat-box"><div class="val" style="font-size:13px">${stakeGames.length?'$'+avgS1.toFixed(0)+'/$'+avgS2.toFixed(0):'—'}</div><div class="lbl">Avg Stakes</div></div>
+    <div class="stat-box"><div class="val">${stakeGames.length}</div><div class="lbl">w/ Stakes</div></div>
+  </div>
+  <div class="stat-section">Streaks</div>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="val" style="font-size:16px">${curStreak}× ${first==='win'?'W':'L'}</div><div class="lbl">Current</div></div>
+    <div class="stat-box"><div class="val green">${maxWStreak}</div><div class="lbl">Best Win Streak</div></div>
+    <div class="stat-box"><div class="val red">${maxLStreak}</div><div class="lbl">Worst L Streak</div></div>
+  </div>
+  <div class="stat-section">Sessions</div>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="val">${sessIds.length}</div><div class="lbl">Total</div></div>
+    <div class="stat-box"><div class="val">${(total/Math.max(sessIds.length,1)).toFixed(1)}</div><div class="lbl">Games/Session</div></div>
+    <div class="stat-box"><div class="val green">${winSess}</div><div class="lbl">Winning Sessions</div></div>
+    <div class="stat-box"><div class="val">${sessPct}%</div><div class="lbl">Session Win %</div></div>
+  </div>
+  ${robinCount?`
+  <div class="stat-section">Round Robins</div>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="val">${robinCount}</div><div class="lbl">Games</div></div>
+    <div class="stat-box"><div class="val green">${robinWins}</div><div class="lbl">Wins</div></div>
+    <div class="stat-box"><div class="val">${Math.round(robinWins/robinCount*100)}%</div><div class="lbl">Win Rate</div></div>
+  </div>`:''}
+  ${bestPartner||easiestOpp?`
+  <div class="stat-section">Matchups (min. 2 games)</div>
+  <div class="stat-grid">
+    ${bestPartner?`<div class="stat-box"><div class="val green" style="font-size:14px">${bestPartner[0]}</div><div class="lbl">Best Partner</div></div>`:''}
+    ${worstPartner&&worstPartner[0]!==bestPartner?.[0]?`<div class="stat-box"><div class="val red" style="font-size:14px">${worstPartner[0]}</div><div class="lbl">Worst Partner</div></div>`:''}
+    ${easiestOpp?`<div class="stat-box"><div class="val green" style="font-size:14px">${easiestOpp[0]}</div><div class="lbl">Easiest Opp</div></div>`:''}
+    ${toughestOpp&&toughestOpp[0]!==easiestOpp?.[0]?`<div class="stat-box"><div class="val red" style="font-size:14px">${toughestOpp[0]}</div><div class="lbl">Toughest Opp</div></div>`:''}
+  </div>`:''}`;
+}
+
+function renderByRole(type){
+  const map={};
+  games.forEach(g=>{
+    (type==='partner'?[g.partner]:[g.opp1,g.opp2]).forEach(k=>{
+      if(!map[k])map[k]={name:k,games:0,wins:0,net:0};
+      map[k].games++;
+      if(g.outcome==='win')map[k].wins++;
+      map[k].net+=g.amount;
+    });
+  });
+  return Object.values(map).sort((a,b)=>b.games-a.games).map(p=>{
+    const pct=Math.round(p.wins/p.games*100);
+    const nc=p.net>0?'#4caf72':p.net<0?'#ef5350':'var(--muted)';
+    const avgNet=p.net/p.games;
+    return`<div class="lb-row"><div><div class="lb-name">${p.name}</div><div class="lb-sub">${p.games}G · ${p.wins}W-${p.games-p.wins}L · ${pct}% WR · avg ${formatAmt(avgNet)}/game</div></div><div class="lb-net" style="color:${nc}">${formatAmt(p.net)}</div></div>`;
+  }).join('')||'<div class="empty"><p>No data yet</p></div>';
+}
+
+function renderSessions(){
+  const map={};
+  games.forEach(g=>{
+    const k=g.sessionId||'solo';
+    if(!map[k])map[k]={name:g.sessionName||'Games',ts:g.ts,games:[]};
+    map[k].games.push(g);
+  });
+  return Object.values(map).sort((a,b)=>b.ts-a.ts).map(s=>{
+    const wins=s.games.filter(g=>g.outcome==='win').length;
+    const net=s.games.reduce((a,g)=>a+g.amount,0);
+    const nc=net>0?'#4caf72':net<0?'#ef5350':'var(--muted)';
+    const robins=s.games.filter(g=>g.isRobin).length;
+    return`<div class="lb-row"><div><div class="lb-name">${s.name}${robins?` <span class="robin-badge" style="font-size:10px">⟳ ${robins}</span>`:''}</div><div class="lb-sub">${s.games.length}G · ${wins}W-${s.games.length-wins}L · avg ${formatAmt(net/s.games.length)}/game</div></div><div class="lb-net" style="color:${nc}">${formatAmt(net)}</div></div>`;
+  }).join('');
+}
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav button').forEach((b,i)=>{b.className=['log','history','stats'][i]===p?'active':''});
+  if(p==='stats')renderStats();
+  if(p==='history')renderHistory();
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+openDB().then(db=>{DB=db;loadAll()});
+</script>
+</body>
+</html>
