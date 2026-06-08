@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="theme-dark-purple">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -15,18 +15,44 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'IBM Plex Sans',sans-serif !important;background:var(--bg);color:var(--text);min-height:100vh}
 :root{
+  --r:8px;--rl:13px;
+}
+html.theme-dark-purple{
   --bg:#000000;--bg2:#0a0a0a;--bg3:#111111;--bg4:#1a1a1a;
   --border:#222222;--border2:#2e2e2e;
   --text:#ffffff;--text2:#aaaaaa;--text3:#555555;
-  --purple:#7c3aed;--purple2:#a78bfa;--purple3:#1e1030;
+  --accent:#7c3aed;--accent2:#a78bfa;--accent3:#1e1030;
   --green:#4ade80;--green-bg:#052010;
   --red:#f87171;--red-bg:#1a0505;
-  --gold:#a78bfa;--r:8px;--rl:13px;
+  --purple:var(--accent);--purple2:var(--accent2);--purple3:var(--accent3);--gold:var(--accent2);
+}
+html.theme-dark-green{
+  --bg:#000000;--bg2:#0a0a0a;--bg3:#111111;--bg4:#1a1a1a;
+  --border:#222222;--border2:#2e2e2e;
+  --text:#ffffff;--text2:#aaaaaa;--text3:#555555;
+  --accent:#16a34a;--accent2:#4ade80;--accent3:#052010;
+  --green:#4ade80;--green-bg:#052010;
+  --red:#f87171;--red-bg:#1a0505;
+  --purple:var(--accent);--purple2:var(--accent2);--purple3:var(--accent3);--gold:var(--accent2);
+}
+html.theme-light-green{
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#eeeeee;--bg4:#e5e5e5;
+  --border:#dddddd;--border2:#cccccc;
+  --text:#111111;--text2:#555555;--text3:#aaaaaa;
+  --accent:#16a34a;--accent2:#15803d;--accent3:#dcfce7;
+  --green:#15803d;--green-bg:#dcfce7;
+  --red:#dc2626;--red-bg:#fee2e2;
+  --purple:var(--accent);--purple2:var(--accent2);--purple3:var(--accent3);--gold:var(--accent2);
 }
 .app{max-width:700px;margin:0 auto;padding:16px;padding-bottom:40px}
-.header{text-align:center;padding:22px 0 18px}
+.header{text-align:center;padding:22px 0 18px;position:relative}
 .header h1{font-size:30px;font-weight:700;letter-spacing:-0.5px;color:var(--purple2)}
 .header h1 span{color:var(--text)}
+.settings-gear{position:absolute;top:22px;right:0;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px}
+.settings-overlay{position:fixed;inset:0;background:var(--bg);z-index:150;display:none}
+.settings-heading{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2);letter-spacing:1.2px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.theme-btn{flex:1;padding:14px 8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--bg2);color:var(--text2);transition:all 0.15s;font-family:'IBM Plex Sans',sans-serif !important}
+.theme-btn.active{border-color:var(--accent);background:var(--accent3);color:var(--accent2)}
 .nav{display:flex;gap:4px;background:var(--bg2);border-radius:var(--rl);padding:4px;margin-bottom:18px;border:1px solid var(--border)}
 .nav button{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--text2);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;font-weight:600;cursor:pointer;border-radius:var(--r);transition:all 0.15s}
 .nav button.active{background:var(--purple);color:var(--text)}
@@ -116,7 +142,10 @@ body{font-family:'IBM Plex Sans',sans-serif !important;background:var(--bg);colo
 </head>
 <body>
 <div class="app">
-  <div class="header"><h1>♠ Euchre<span>Tracker</span></h1></div>
+  <div class="header">
+    <h1>♠ Euchre<span>Tracker</span></h1>
+    <button class="settings-gear" onclick="openSettings()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </div>
   <nav class="nav">
     <button class="active" onclick="showPage('log')">Log Game</button>
     <button onclick="showPage('history')">History</button>
@@ -175,7 +204,7 @@ body{font-family:'IBM Plex Sans',sans-serif !important;background:var(--bg);colo
       </div>
       <div class="field">
         <label>Amount won / lost ($)</label>
-        <input id="amount" type="number" step="0.25" placeholder="0.00" oninput="validateAmountField()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:15px;padding:9px 12px;border-radius:var(--r);outline:none;width:100%;transition:border-color 0.15s"/>
+        <input id="amount" type="number" step="0.25" inputmode="numeric" pattern="[0-9]*" placeholder="0.00" oninput="validateAmountField()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:15px;padding:9px 12px;border-radius:var(--r);outline:none;width:100%;transition:border-color 0.15s"/>
         <div id="amountWarning" style="color:#f97316;font-size:12px;margin-top:4px"></div>
       </div>
       <div class="field" style="margin-bottom:0">
@@ -221,6 +250,32 @@ body{font-family:'IBM Plex Sans',sans-serif !important;background:var(--bg);colo
 </div>
 <div class="toast" id="toast"></div>
 
+<div class="settings-overlay" id="settingsOverlay">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px">
+    <div style="font-size:18px;font-weight:700">Settings</div>
+    <button onclick="closeSettings()" style="background:transparent;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:8px">&times;</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:28px">
+    <div>
+      <div class="settings-heading">Appearance</div>
+      <div style="display:flex;gap:8px">
+        <button class="theme-btn" id="themeBtn-dark-purple" onclick="applyTheme('dark-purple');updateThemeButtons()">Dark Purple</button>
+        <button class="theme-btn" id="themeBtn-dark-green" onclick="applyTheme('dark-green');updateThemeButtons()">Dark Green</button>
+        <button class="theme-btn" id="themeBtn-light-green" onclick="applyTheme('light-green');updateThemeButtons()">Light Green</button>
+      </div>
+    </div>
+    <div>
+      <div class="settings-heading">Default Stakes</div>
+      <div class="stakes-row" style="margin-bottom:14px">
+        <input id="settings_stake1" type="number" min="0" step="0.25" inputmode="numeric" pattern="[0-9]*" placeholder="4" style="background:var(--bg2);border:1px solid var(--border)"/>
+        <span class="stakes-slash">/</span>
+        <input id="settings_stake2" type="number" min="0" step="0.25" inputmode="numeric" pattern="[0-9]*" placeholder="4" style="background:var(--bg2);border:1px solid var(--border)"/>
+      </div>
+      <button style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="saveDefaultStakes()">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let DB, games=[], currentSession=null, currentOutcome=null, activeStatTab='overall';
 let robinMode=false, robinGames=[];
@@ -244,6 +299,7 @@ async function loadAll(){
   games=await dbGetAll();
   games.sort((a,b)=>b.ts-a.ts);
   renderHistory();renderStats();updateBanner();
+  applyDefaultStakes();
 }
 
 function knownPlayers(){
@@ -314,6 +370,13 @@ function toggleSameStake(){
 }
 function syncStakeIfLocked(){
   if(stakeLocked)document.getElementById('stake2').value=document.getElementById('stake1').value;
+}
+function applyDefaultStakes(){
+  const s1=localStorage.getItem('euchre_default_stake1')||4;
+  const s2=localStorage.getItem('euchre_default_stake2')||4;
+  document.getElementById('stake1').value=s1;
+  document.getElementById('stake2').value=s2;
+  syncStakeIfLocked();
 }
 
 function getAmountValidation(){
@@ -776,11 +839,46 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2200);
 }
 
+function applyTheme(themeName){
+  document.documentElement.classList.remove('theme-dark-purple','theme-dark-green','theme-light-green');
+  document.documentElement.classList.add('theme-'+themeName);
+  localStorage.setItem('euchre_theme',themeName);
+}
+function updateThemeButtons(){
+  const current=localStorage.getItem('euchre_theme')||'dark-purple';
+  ['dark-purple','dark-green','light-green'].forEach(t=>{
+    document.getElementById('themeBtn-'+t).classList.toggle('active',t===current);
+  });
+}
+function openSettings(){
+  const ov=document.getElementById('settingsOverlay');
+  ov.style.display='flex';
+  ov.style.flexDirection='column';
+  ov.style.padding='20px';
+  updateThemeButtons();
+  document.getElementById('settings_stake1').value=localStorage.getItem('euchre_default_stake1')||4;
+  document.getElementById('settings_stake2').value=localStorage.getItem('euchre_default_stake2')||4;
+}
+function closeSettings(){
+  document.getElementById('settingsOverlay').style.display='none';
+}
+function saveDefaultStakes(){
+  localStorage.setItem('euchre_default_stake1',document.getElementById('settings_stake1').value);
+  localStorage.setItem('euchre_default_stake2',document.getElementById('settings_stake2').value);
+  applyDefaultStakes();
+  showToast('Default stakes saved');
+}
+
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 
-openDB().then(db=>{DB=db;loadAll()});
+openDB().then(db=>{
+  DB=db;
+  applyTheme(localStorage.getItem('euchre_theme')||'dark-purple');
+  loadAll();
+  toggleSameStake();
+});
 </script>
 </body>
 </html>
