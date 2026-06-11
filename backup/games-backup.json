@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "ts": 1781215462001,
+    "partner": "Ryan",
+    "opp1": "Chuck",
+    "opp2": "Ryder",
+    "outcome": "win",
+    "stake1": 5,
+    "stake2": 5,
+    "amount": 10,
+    "notes": "",
+    "sessionId": 1781215461981,
+    "sessionName": "Jun 11, 2026 · 6:04 PM",
+    "isRobin": false,
+    "id": 4
+  }
+]
