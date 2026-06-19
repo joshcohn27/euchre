@@ -50,7 +50,7 @@ html.theme-light-green{
 .header h1{font-size:30px;font-weight:700;letter-spacing:-0.5px;color:var(--purple2)}
 .header h1 span{color:var(--text)}
 .settings-gear{position:absolute;top:22px;right:0;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px}
-.settings-overlay{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;overflow-y:auto}
+.settings-overlay{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;overflow-y:auto;width:100%;max-width:100vw;box-sizing:border-box}
 .settings-heading{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2);letter-spacing:1.2px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .theme-btn{width:100%;padding:14px 8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--bg2);color:var(--text2);transition:all 0.15s;font-family:'IBM Plex Sans',sans-serif !important}
 .theme-btn.active{border-color:var(--accent);background:var(--accent3);color:var(--accent2)}
@@ -333,7 +333,7 @@ html.theme-light-green{
     </div>
     <div>
       <div class="settings-heading">Default Stakes</div>
-      <div class="stakes-row" style="margin-bottom:14px">
+      <div class="stakes-row" style="margin-bottom:14px;width:100%;max-width:100%">
         <input id="settings_stake1" type="number" min="0" step="0.25" inputmode="numeric" pattern="[0-9]*" placeholder="4" style="background:var(--bg2);border:1px solid var(--border)"/>
         <span class="stakes-slash">/</span>
         <input id="settings_stake2" type="number" min="0" step="0.25" inputmode="numeric" pattern="[0-9]*" placeholder="4" style="background:var(--bg2);border:1px solid var(--border)"/>
