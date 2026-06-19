@@ -50,9 +50,9 @@ html.theme-light-green{
 .header h1{font-size:30px;font-weight:700;letter-spacing:-0.5px;color:var(--purple2)}
 .header h1 span{color:var(--text)}
 .settings-gear{position:absolute;top:22px;right:0;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px}
-.settings-overlay{position:fixed;inset:0;background:var(--bg);z-index:150;display:none}
+.settings-overlay{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;overflow-y:auto}
 .settings-heading{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2);letter-spacing:1.2px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.theme-btn{flex:1;padding:14px 8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--bg2);color:var(--text2);transition:all 0.15s;font-family:'IBM Plex Sans',sans-serif !important}
+.theme-btn{width:100%;padding:14px 8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--bg2);color:var(--text2);transition:all 0.15s;font-family:'IBM Plex Sans',sans-serif !important}
 .theme-btn.active{border-color:var(--accent);background:var(--accent3);color:var(--accent2)}
 .nav{display:flex;gap:4px;background:var(--bg2);border-radius:var(--rl);padding:4px;margin-bottom:18px;border:1px solid var(--border)}
 .nav button{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--text2);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;font-weight:600;cursor:pointer;border-radius:var(--r);transition:all 0.15s}
@@ -325,7 +325,7 @@ html.theme-light-green{
   <div style="display:flex;flex-direction:column;gap:28px">
     <div>
       <div class="settings-heading">Appearance</div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;flex-direction:column;gap:8px">
         <button class="theme-btn" id="themeBtn-dark-purple" onclick="applyTheme('dark-purple');updateThemeButtons()">Dark Purple</button>
         <button class="theme-btn" id="themeBtn-dark-green" onclick="applyTheme('dark-green');updateThemeButtons()">Dark Green</button>
         <button class="theme-btn" id="themeBtn-light-green" onclick="applyTheme('light-green');updateThemeButtons()">Light Green</button>
@@ -339,8 +339,21 @@ html.theme-light-green{
         <input id="settings_stake2" type="number" min="0" step="0.25" inputmode="numeric" pattern="[0-9]*" placeholder="4" style="background:var(--bg2);border:1px solid var(--border)"/>
       </div>
       <button style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="saveDefaultStakes()">Save</button>
-      <button class="btn btn-danger" style="width:100%;margin-top:14px" onclick="handleSignOut()">Sign Out</button>
     </div>
+    <div>
+      <div class="settings-heading">Change PIN</div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Current PIN</label>
+        <input id="settings_current_pin" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="Current 4-digit PIN" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>New PIN</label>
+        <input id="settings_new_pin" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="New 4-digit PIN" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div id="pinChangeError" style="color:var(--red);font-size:12px;margin-bottom:8px"></div>
+      <button style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleChangePin()">Update PIN</button>
+    </div>
+    <button class="btn btn-danger" style="width:100%" onclick="handleSignOut()">Sign Out</button>
   </div>
 </div>
 
@@ -466,7 +479,13 @@ async function migrateLocalGames(){
   }));
   if(!toInsert.length)return;
   const{error}=await sb.from('games').insert(toInsert);
-  if(!error)showToast(`Synced ${toInsert.length} games to cloud`);
+  if(!error){
+    showToast(`Synced ${toInsert.length} games to cloud`);
+    await new Promise(res=>{
+      const tx=DB.transaction('games','readwrite');
+      tx.objectStore('games').clear().onsuccess=res;
+    });
+  }
 }
 
 async function checkExistingSession(){
@@ -1057,6 +1076,7 @@ function openSettings(){
   ov.style.display='flex';
   ov.style.flexDirection='column';
   ov.style.padding='20px';
+  ov.style.maxHeight='100vh';
   updateThemeButtons();
   document.getElementById('settings_stake1').value=localStorage.getItem('euchre_default_stake1')||4;
   document.getElementById('settings_stake2').value=localStorage.getItem('euchre_default_stake2')||4;
@@ -1069,6 +1089,28 @@ function saveDefaultStakes(){
   localStorage.setItem('euchre_default_stake2',document.getElementById('settings_stake2').value);
   applyDefaultStakes();
   showToast('Default stakes saved');
+}
+
+async function handleChangePin(){
+  const currentPin=document.getElementById('settings_current_pin').value.trim();
+  const newPin=document.getElementById('settings_new_pin').value.trim();
+  const errEl=document.getElementById('pinChangeError');
+  errEl.textContent='';
+  if(!/^[0-9]{4}$/.test(currentPin)){errEl.textContent='Current PIN must be 4 digits';return}
+  if(!/^[0-9]{4}$/.test(newPin)){errEl.textContent='New PIN must be 4 digits';return}
+  if(currentPin===newPin){errEl.textContent='New PIN must be different';return}
+  const{data:profile}=await sb.from('profiles').select('email,username').eq('id',currentUser.id).single();
+  if(!profile){errEl.textContent='Could not load profile';return}
+  const oldPassword='euchre_'+currentPin+'_'+profile.username.toLowerCase();
+  const newPassword='euchre_'+newPin+'_'+profile.username.toLowerCase();
+  const{error:signInErr}=await sb.auth.signInWithPassword({email:profile.email,password:oldPassword});
+  if(signInErr){errEl.textContent='Current PIN is incorrect';return}
+  const{error:updateErr}=await sb.auth.updateUser({password:newPassword});
+  if(updateErr){errEl.textContent='Failed to update PIN: '+updateErr.message;return}
+  await sb.from('profiles').update({pin:newPin}).eq('id',currentUser.id);
+  document.getElementById('settings_current_pin').value='';
+  document.getElementById('settings_new_pin').value='';
+  showToast('PIN updated');
 }
 
 if('serviceWorker' in navigator){
