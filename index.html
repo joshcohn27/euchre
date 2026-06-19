@@ -312,6 +312,14 @@ html.theme-light-green{
       <div class="section-label" style="margin:0">Leaderboard</div>
       <button onclick="renderLeaderboard()" style="background:transparent;border:none;color:var(--text2);font-size:18px;cursor:pointer">↻</button>
     </div>
+    <select id="lbSort" onchange="renderLeaderboard()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none;cursor:pointer">
+      <option value="net">Net Winnings</option>
+      <option value="winrate">Win Rate</option>
+      <option value="wins">Most Wins</option>
+      <option value="games">Most Games</option>
+      <option value="bigwin">Biggest Win</option>
+      <option value="bigloss">Biggest Loss</option>
+    </select>
     <div id="leaderboardContent"></div>
   </div>
 </div>
@@ -1043,7 +1051,16 @@ async function renderLeaderboard(){
     if(Number(g.amount)>p.bigWin)p.bigWin=Number(g.amount);
     if(Number(g.amount)<p.bigLoss)p.bigLoss=Number(g.amount);
   });
-  const rows=Object.values(map).sort((a,b)=>b.net-a.net);
+  const sortBy=document.getElementById('lbSort')?.value||'net';
+  const rows=Object.values(map).sort((a,b)=>{
+    if(sortBy==='net')return b.net-a.net;
+    if(sortBy==='winrate')return(b.wins/Math.max(b.games,1))-(a.wins/Math.max(a.games,1));
+    if(sortBy==='wins')return b.wins-a.wins;
+    if(sortBy==='games')return b.games-a.games;
+    if(sortBy==='bigwin')return b.bigWin-a.bigWin;
+    if(sortBy==='bigloss')return a.bigLoss-b.bigLoss;
+    return b.net-a.net;
+  });
   el.innerHTML=rows.map((p,i)=>{
     const winRate=p.games?Math.round(p.wins/p.games*100):0;
     const nc=p.net>0?'var(--green)':p.net<0?'var(--red)':'var(--text2)';
