@@ -170,28 +170,29 @@ html.theme-light-green{
     </div>
     <div id="signInForm">
       <div class="field">
-        <label>Email</label>
-        <input id="signInEmail" type="email" autocomplete="username" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+        <label>Username</label>
+        <input id="signInUsername" autocomplete="username" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
       </div>
       <div class="field">
-        <label>Password</label>
-        <input id="signInPassword" type="password" autocomplete="current-password" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+        <label>PIN</label>
+        <input id="signInPin" type="tel" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="Enter your PIN" autocomplete="current-password" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
       </div>
       <button style="width:100%;background:var(--accent);color:#fff;padding:14px;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleSignIn()">Sign In</button>
       <div id="signInError" style="color:var(--red);font-size:12px;margin-top:8px"></div>
+      <button style="background:transparent;border:none;color:var(--text2);font-size:12px;cursor:pointer;margin-top:8px;text-decoration:underline;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleForgotPin()">Forgot PIN?</button>
     </div>
     <div id="signUpForm" style="display:none">
       <div class="field">
-        <label>Email</label>
-        <input id="signUpEmail" type="email" autocomplete="username" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input id="signUpPassword" type="password" autocomplete="new-password" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
-      </div>
-      <div class="field">
         <label>Username</label>
         <input id="signUpUsername" placeholder="Choose a username, shown on leaderboard" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input id="signUpEmail" type="email" autocomplete="email" placeholder="For account recovery" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div class="field">
+        <label>4-digit PIN</label>
+        <input id="signUpPin" type="tel" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="Choose a 4-digit PIN" autocomplete="new-password" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
       </div>
       <button style="width:100%;background:var(--accent);color:#fff;padding:14px;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleSignUp()">Sign Up</button>
       <div id="signUpError" style="color:var(--red);font-size:12px;margin-top:8px"></div>
@@ -200,15 +201,15 @@ html.theme-light-green{
 </div>
 <div class="app">
   <div class="header">
-    <div id="headerUsername" style="position:absolute;top:22px;left:0;font-size:12px;color:var(--text2);font-weight:600;padding:8px;display:none"></div>
+    <div id="headerUsername" style="position:fixed;top:0;left:0;right:0;text-align:center;background:var(--bg);padding:4px 8px;font-size:11px;z-index:50;color:var(--text2);font-weight:600;display:none"></div>
     <h1>♠ Euchre<span>Tracker</span></h1>
+    <button onclick="showPage('board')" style="position:absolute;top:22px;right:36px;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px;font-size:18px">🏆</button>
     <button class="settings-gear" onclick="openSettings()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
   <nav class="nav">
     <button class="active" onclick="showPage('log')">Log Game</button>
     <button onclick="showPage('history')">History</button>
     <button onclick="showPage('stats')">Stats</button>
-    <button onclick="showPage('board')">Board</button>
   </nav>
 
   <!-- LOG -->
@@ -349,6 +350,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let currentUsername = null;
+let migrationDone = false;
 
 let DB, games=[], currentSession=null, currentOutcome=null, activeStatTab='overall';
 let robinMode=false, robinGames=[];
@@ -376,28 +378,50 @@ function showAuthTab(tab){
 }
 
 async function handleSignIn(){
-  const email=document.getElementById('signInEmail').value.trim();
-  const password=document.getElementById('signInPassword').value;
+  const username=document.getElementById('signInUsername').value.trim();
+  const pin=document.getElementById('signInPin').value.trim();
   const errEl=document.getElementById('signInError');
   errEl.textContent='';
+  const{data:profile,error:profileErr}=await sb.from('profiles').select('email').eq('username',username).single();
+  if(profileErr||!profile){errEl.textContent='Username not found';return}
+  const email=profile.email;
+  const password='euchre_'+pin+'_'+username.toLowerCase();
   const{data,error}=await sb.auth.signInWithPassword({email,password});
   if(error){errEl.textContent=error.message;return}
   await onAuthSuccess(data.user);
 }
 
+async function handleForgotPin(){
+  const username=(prompt('Enter your username:')||'').trim();
+  if(!username)return;
+  const{data:profile,error:profileErr}=await sb.from('profiles').select('email').eq('username',username).single();
+  if(profileErr||!profile){alert('Username not found');return}
+  await sb.auth.resetPasswordForEmail(profile.email,{redirectTo:'https://joshcohn27.github.io/euchre'});
+  showToast('Password reset email sent - check your inbox');
+}
+
 async function handleSignUp(){
-  const email=document.getElementById('signUpEmail').value.trim();
-  const password=document.getElementById('signUpPassword').value;
   const username=document.getElementById('signUpUsername').value.trim();
+  const email=document.getElementById('signUpEmail').value.trim();
+  const pin=document.getElementById('signUpPin').value.trim();
   const errEl=document.getElementById('signUpError');
   errEl.textContent='';
   if(username.length<3||username.length>20||!/^[A-Za-z0-9_]+$/.test(username)){
     errEl.textContent='Username must be 3-20 characters, letters, numbers, and underscores only';
     return;
   }
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    errEl.textContent='Please enter a valid email address';
+    return;
+  }
+  if(!/^[0-9]{4}$/.test(pin)){
+    errEl.textContent='PIN must be exactly 4 digits';
+    return;
+  }
+  const password='euchre_'+pin+'_'+username.toLowerCase();
   const{data,error}=await sb.auth.signUp({email,password});
   if(error){errEl.textContent=error.message;return}
-  const{error:profileError}=await sb.from('profiles').insert({id:data.user.id,username});
+  const{error:profileError}=await sb.from('profiles').insert({id:data.user.id,username,pin,email});
   if(profileError){errEl.textContent=profileError.message;return}
   await onAuthSuccess(data.user);
 }
@@ -418,6 +442,8 @@ async function onAuthSuccess(user){
 }
 
 async function migrateLocalGames(){
+  if(migrationDone)return;
+  migrationDone=true;
   const local=await dbGetAll();
   if(!local.length)return;
   const{data:remoteGames}=await sb.from('games').select('ts').eq('user_id',currentUser.id);
@@ -461,8 +487,29 @@ async function handleSignOut(){
   document.getElementById('authOverlay').style.display='flex';
 }
 
+async function fetchGames(){
+  if(!currentUser)return await dbGetAll();
+  const{data,error}=await sb.from('games').select('*').eq('user_id',currentUser.id).order('ts',{ascending:false});
+  if(error||!data)return await dbGetAll();
+  return data.map(g=>({
+    id:g.id,
+    ts:g.ts,
+    partner:g.partner,
+    opp1:g.opp1,
+    opp2:g.opp2,
+    outcome:g.outcome,
+    stake1:Number(g.stake1),
+    stake2:Number(g.stake2),
+    amount:Number(g.amount),
+    notes:g.notes||'',
+    sessionId:g.session_id,
+    sessionName:g.session_name,
+    isRobin:g.is_robin
+  }));
+}
+
 async function loadAll(){
-  games=await dbGetAll();
+  games=await fetchGames();
   games.sort((a,b)=>b.ts-a.ts);
   renderHistory();renderStats();updateBanner();
   applyDefaultStakes();
@@ -794,7 +841,7 @@ function exportCSV(){
 
 function showStatTab(tab){
   activeStatTab=tab;
-  document.querySelectorAll('.tab-inner').forEach((b,i)=>{
+  document.querySelectorAll('#page-stats .tab-inner').forEach((b,i)=>{
     b.className='tab-inner'+(['overall','partners','opponents','sessions'][i]===tab?' active':'');
   });
   renderStats();
@@ -958,9 +1005,9 @@ async function renderLeaderboard(){
     const p=map[g.username];
     p.games++;
     if(g.outcome==='win')p.wins++;else p.losses++;
-    p.net+=g.amount;
-    if(g.amount>p.bigWin)p.bigWin=g.amount;
-    if(g.amount<p.bigLoss)p.bigLoss=g.amount;
+    p.net+=Number(g.amount);
+    if(Number(g.amount)>p.bigWin)p.bigWin=Number(g.amount);
+    if(Number(g.amount)<p.bigLoss)p.bigLoss=Number(g.amount);
   });
   const rows=Object.values(map).sort((a,b)=>b.net-a.net);
   el.innerHTML=rows.map((p,i)=>{
@@ -983,7 +1030,7 @@ async function renderLeaderboard(){
 function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
-  document.querySelectorAll('.nav button').forEach((b,i)=>{b.className=['log','history','stats','board'][i]===p?'active':''});
+  document.querySelectorAll('.nav button').forEach((b,i)=>{b.className=['log','history','stats'][i]===p?'active':''});
   if(p==='stats')renderStats();
   if(p==='history')renderHistory();
   if(p==='board')renderLeaderboard();
