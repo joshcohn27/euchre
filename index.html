@@ -638,8 +638,10 @@ function getAmountValidation(){
   if(!s1||!s2)return{skip:true};
   const amt=Math.abs(parseFloat(document.getElementById('amount').value)||0);
   const fmt=v=>'$'+(Number.isInteger(v)?v:v.toFixed(2));
-  if(currentOutcome==='loss')
-    return{skip:false,valid:Math.abs(amt-s1)<1e-9,expected:[fmt(s1)]};
+  if(currentOutcome==='loss'){
+    const diff=amt-s1,r=diff%s2;
+    return{skip:false,valid:Math.abs(amt-s1)<1e-9||(diff>=0&&(Math.abs(r)<1e-9||Math.abs(r-s2)<1e-9)),expected:[0,1,2,3].map(n=>fmt(s1+n*s2))};
+  }
   if(currentOutcome==='win'){
     const diff=amt-s1,r=diff%s2;
     return{skip:false,valid:diff>=0&&(Math.abs(r)<1e-9||Math.abs(r-s2)<1e-9),expected:[0,1,2,3].map(n=>fmt(s1+n*s2))};
