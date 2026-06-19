@@ -669,6 +669,7 @@ async function logGame(continueSession){
     sb.from('games').insert({
       user_id:currentUser.id,
       username:currentUsername,
+      full_name:currentFullName,
       ts:game.ts,
       partner:game.partner,
       opp1:game.opp1,
