@@ -1,10 +1,10 @@
 // Cache name is generated at build time as 'euchre-v<version>-<unix timestamp>'.
 // Never edit this by hand — it is updated automatically on each build.
-const CACHE = 'euchre-v1.1-1780940600';
+const CACHE = 'euchre-v1.1-1781891133';
 const ASSETS = [
   './',
   './index.html',
-  'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap'
+  'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600;700&display=swap'
 ];
 
 self.addEventListener('install', e => {
@@ -22,6 +22,10 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') {
+    e.respondWith(fetch(e.request));
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;

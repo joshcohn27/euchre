@@ -10,7 +10,8 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icon.png"/>
 <title>Euchre Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'IBM Plex Sans',sans-serif !important;background:var(--bg);color:var(--text);min-height:100vh}
@@ -141,8 +142,65 @@ html.theme-light-green{
 </style>
 </head>
 <body>
+<div id="authOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px">
+  <h1 style="font-size:30px;font-weight:700;letter-spacing:-0.5px;color:var(--purple2);margin-bottom:8px">♠ Euchre<span style="color:var(--text)">Tracker</span></h1>
+  <div style="color:var(--text2);font-size:14px;text-align:center;margin-bottom:32px">Sign in to sync your games and see the leaderboard</div>
+  <div style="width:100%;max-width:360px">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <div style="width:18px;height:18px;border-radius:50%;border:1px solid var(--text2);color:var(--text2);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">i</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text)">Before you sign in</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+        <span class="pd-dot" style="background:var(--green);margin-top:6px"></span>
+        <span style="font-size:13px;color:var(--text2);line-height:1.6">Your existing games will automatically sync to your account on first login - nothing will be lost</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+        <span class="pd-dot" style="background:var(--green);margin-top:6px"></span>
+        <span style="font-size:13px;color:var(--text2);line-height:1.6">Once signed in your games are saved to the cloud and accessible anywhere</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <span class="pd-dot" style="background:var(--green);margin-top:6px"></span>
+        <span style="font-size:13px;color:var(--text2);line-height:1.6">On iPhone? Tap the Share button in Safari and select Add to Home Screen for the best experience</span>
+      </div>
+    </div>
+    <div class="tabs-inner" id="authTabs" style="justify-content:center">
+      <button class="tab-inner active" id="authTab-signin" onclick="showAuthTab('signin')">Sign In</button>
+      <button class="tab-inner" id="authTab-signup" onclick="showAuthTab('signup')">Sign Up</button>
+    </div>
+    <div id="signInForm">
+      <div class="field">
+        <label>Email</label>
+        <input id="signInEmail" type="email" autocomplete="username" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="signInPassword" type="password" autocomplete="current-password" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <button style="width:100%;background:var(--accent);color:#fff;padding:14px;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleSignIn()">Sign In</button>
+      <div id="signInError" style="color:var(--red);font-size:12px;margin-top:8px"></div>
+    </div>
+    <div id="signUpForm" style="display:none">
+      <div class="field">
+        <label>Email</label>
+        <input id="signUpEmail" type="email" autocomplete="username" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="signUpPassword" type="password" autocomplete="new-password" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div class="field">
+        <label>Username</label>
+        <input id="signUpUsername" placeholder="Choose a username, shown on leaderboard" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <button style="width:100%;background:var(--accent);color:#fff;padding:14px;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleSignUp()">Sign Up</button>
+      <div id="signUpError" style="color:var(--red);font-size:12px;margin-top:8px"></div>
+    </div>
+  </div>
+</div>
 <div class="app">
   <div class="header">
+    <div id="headerUsername" style="position:absolute;top:22px;left:0;font-size:12px;color:var(--text2);font-weight:600;padding:8px;display:none"></div>
     <h1>♠ Euchre<span>Tracker</span></h1>
     <button class="settings-gear" onclick="openSettings()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
@@ -150,6 +208,7 @@ html.theme-light-green{
     <button class="active" onclick="showPage('log')">Log Game</button>
     <button onclick="showPage('history')">History</button>
     <button onclick="showPage('stats')">Stats</button>
+    <button onclick="showPage('board')">Board</button>
   </nav>
 
   <!-- LOG -->
@@ -226,8 +285,6 @@ html.theme-light-green{
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
         <input id="histSearch" placeholder="Filter…" oninput="renderHistory()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none;width:120px"/>
         <button class="btn btn-gold btn-sm" onclick="exportCSV()">Export CSV</button>
-        <button class="btn btn-gold btn-sm" onclick="backupToGitHub()">Backup to GitHub</button>
-        <button class="btn btn-outline btn-sm" onclick="restoreFromGitHub()">Restore from GitHub</button>
       </div>
     </div>
     <div id="historyList"></div>
@@ -242,6 +299,15 @@ html.theme-light-green{
       <button class="tab-inner" onclick="showStatTab('sessions')">Sessions</button>
     </div>
     <div id="statsContent"></div>
+  </div>
+
+  <!-- BOARD -->
+  <div id="page-board" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="section-label" style="margin:0">Leaderboard</div>
+      <button onclick="renderLeaderboard()" style="background:transparent;border:none;color:var(--text2);font-size:18px;cursor:pointer">↻</button>
+    </div>
+    <div id="leaderboardContent"></div>
   </div>
 </div>
 
@@ -272,11 +338,18 @@ html.theme-light-green{
         <input id="settings_stake2" type="number" min="0" step="0.25" inputmode="numeric" pattern="[0-9]*" placeholder="4" style="background:var(--bg2);border:1px solid var(--border)"/>
       </div>
       <button style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="saveDefaultStakes()">Save</button>
+      <button class="btn btn-danger" style="width:100%;margin-top:14px" onclick="handleSignOut()">Sign Out</button>
     </div>
   </div>
 </div>
 
 <script>
+const SUPABASE_URL = 'https://coebedqobktxkowdepjb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvZWJlZHFvYmt0eGtvd2RlcGpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4ODEzMzYsImV4cCI6MjA5NzQ1NzMzNn0.Y08EWNUMmKSZVo8bYbeL3ZDfzfzmH7tBJF8joFtLfpc';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentUser = null;
+let currentUsername = null;
+
 let DB, games=[], currentSession=null, currentOutcome=null, activeStatTab='overall';
 let robinMode=false, robinGames=[];
 
@@ -294,6 +367,99 @@ function openDB(){
 function dbGetAll(){return new Promise(res=>{DB.transaction('games','readonly').objectStore('games').getAll().onsuccess=e=>res(e.target.result)})}
 function dbPut(data){return new Promise(res=>{DB.transaction('games','readwrite').objectStore('games').put(data).onsuccess=e=>res(e.target.result)})}
 function dbDelete(id){return new Promise(res=>{DB.transaction('games','readwrite').objectStore('games').delete(id).onsuccess=res})}
+
+function showAuthTab(tab){
+  document.getElementById('authTab-signin').className='tab-inner'+(tab==='signin'?' active':'');
+  document.getElementById('authTab-signup').className='tab-inner'+(tab==='signup'?' active':'');
+  document.getElementById('signInForm').style.display=tab==='signin'?'block':'none';
+  document.getElementById('signUpForm').style.display=tab==='signup'?'block':'none';
+}
+
+async function handleSignIn(){
+  const email=document.getElementById('signInEmail').value.trim();
+  const password=document.getElementById('signInPassword').value;
+  const errEl=document.getElementById('signInError');
+  errEl.textContent='';
+  const{data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error){errEl.textContent=error.message;return}
+  await onAuthSuccess(data.user);
+}
+
+async function handleSignUp(){
+  const email=document.getElementById('signUpEmail').value.trim();
+  const password=document.getElementById('signUpPassword').value;
+  const username=document.getElementById('signUpUsername').value.trim();
+  const errEl=document.getElementById('signUpError');
+  errEl.textContent='';
+  if(username.length<3||username.length>20||!/^[A-Za-z0-9_]+$/.test(username)){
+    errEl.textContent='Username must be 3-20 characters, letters, numbers, and underscores only';
+    return;
+  }
+  const{data,error}=await sb.auth.signUp({email,password});
+  if(error){errEl.textContent=error.message;return}
+  const{error:profileError}=await sb.from('profiles').insert({id:data.user.id,username});
+  if(profileError){errEl.textContent=profileError.message;return}
+  await onAuthSuccess(data.user);
+}
+
+async function onAuthSuccess(user){
+  currentUser=user;
+  const{data:profile}=await sb.from('profiles').select('username').eq('id',user.id).single();
+  currentUsername=profile?profile.username:null;
+  const el = document.getElementById('headerUsername');
+  if (el && currentUsername) {
+    el.textContent = 'Hi, ' + currentUsername;
+    el.style.display = 'block';
+  }
+  document.getElementById('authOverlay').style.display='none';
+  await migrateLocalGames();
+  await loadAll();
+  updateBanner();
+}
+
+async function migrateLocalGames(){
+  const local=await dbGetAll();
+  if(!local.length)return;
+  const{data:remoteGames}=await sb.from('games').select('ts').eq('user_id',currentUser.id);
+  const existingTs=new Set((remoteGames||[]).map(g=>g.ts));
+  const toInsert=local.filter(g=>!existingTs.has(g.ts)).map(g=>({
+    user_id:currentUser.id,
+    username:currentUsername,
+    ts:g.ts,
+    partner:g.partner,
+    opp1:g.opp1,
+    opp2:g.opp2,
+    outcome:g.outcome,
+    stake1:g.stake1,
+    stake2:g.stake2,
+    amount:g.amount,
+    notes:g.notes,
+    session_id:g.sessionId,
+    session_name:g.sessionName,
+    is_robin:g.isRobin
+  }));
+  if(!toInsert.length)return;
+  const{error}=await sb.from('games').insert(toInsert);
+  if(!error)showToast(`Synced ${toInsert.length} games to cloud`);
+}
+
+async function checkExistingSession(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){
+    await onAuthSuccess(session.user);
+  } else {
+    document.getElementById('authOverlay').style.display='flex';
+  }
+}
+
+async function handleSignOut(){
+  await sb.auth.signOut();
+  currentUser=null;
+  currentUsername=null;
+  const el = document.getElementById('headerUsername');
+  if (el) el.style.display = 'none';
+  document.getElementById('authOverlay').style.display='flex';
+}
 
 async function loadAll(){
   games=await dbGetAll();
@@ -420,6 +586,26 @@ async function logGame(continueSession){
   const amount=currentOutcome==='win'?Math.abs(rawAmt):-Math.abs(rawAmt);
   const game={ts:Date.now(),partner,opp1,opp2,outcome:currentOutcome,stake1:s1,stake2:s2,amount,notes,sessionId:currentSession.id,sessionName:currentSession.name,isRobin:robinMode};
   const id=await dbPut(game);game.id=id;games.unshift(game);
+  if(currentUser){
+    sb.from('games').insert({
+      user_id:currentUser.id,
+      username:currentUsername,
+      ts:game.ts,
+      partner:game.partner,
+      opp1:game.opp1,
+      opp2:game.opp2,
+      outcome:game.outcome,
+      stake1:game.stake1,
+      stake2:game.stake2,
+      amount:game.amount,
+      notes:game.notes,
+      session_id:game.sessionId,
+      session_name:game.sessionName,
+      is_robin:game.isRobin
+    }).then(({error})=>{
+      if(error)console.error('Supabase save error:',error);
+    });
+  }
   if(robinMode){
     robinGames.push(game);
     if(robinGames.length>=3){showToast('Round Robin complete!');robinMode=false;robinGames=[];}
@@ -606,79 +792,6 @@ function exportCSV(){
   showToast('CSV exported');
 }
 
-const GH_OWNER='joshcohn27', GH_REPO='euchre', GH_PATH='backup/games-backup.json', GH_BRANCH='main';
-function getGitHubToken(){
-  let t=localStorage.getItem('ghToken');
-  if(!t){
-    t=(prompt('Enter your GitHub personal access token:')||'').trim();
-    if(t)localStorage.setItem('ghToken',t);
-  }
-  return t||null;
-}
-function b64Encode(str){
-  const bytes=new TextEncoder().encode(str);
-  let binary='';
-  for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
-  return btoa(binary);
-}
-function b64Decode(str){
-  const binary=atob(str);
-  const bytes=new Uint8Array(binary.length);
-  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-  return new TextDecoder().decode(bytes);
-}
-function ghHeaders(token){
-  return {'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'};
-}
-async function backupToGitHub(){
-  const token=getGitHubToken();
-  if(!token){showToast('GitHub token required');return}
-  const apiUrl=`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}`;
-  try{
-    const all=await dbGetAll();
-    const json=JSON.stringify(all,null,2);
-    let sha=null;
-    const getRes=await fetch(apiUrl+'?ref='+GH_BRANCH,{headers:ghHeaders(token)});
-    if(getRes.ok)sha=(await getRes.json()).sha;
-    const putRes=await fetch(apiUrl,{
-      method:'PUT',
-      headers:ghHeaders(token),
-      body:JSON.stringify({
-        message:'Backup euchre games — '+new Date().toISOString(),
-        content:b64Encode(json),
-        branch:GH_BRANCH,
-        ...(sha?{sha}:{})
-      })
-    });
-    if(!putRes.ok)throw new Error('GitHub API error '+putRes.status);
-    showToast('Backed up to GitHub');
-  }catch(err){showToast('Backup failed: '+err.message)}
-}
-async function restoreFromGitHub(){
-  const token=getGitHubToken();
-  if(!token){showToast('GitHub token required');return}
-  const apiUrl=`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}`;
-  try{
-    const res=await fetch(apiUrl+'?ref='+GH_BRANCH,{headers:ghHeaders(token)});
-    if(!res.ok)throw new Error('GitHub API error '+res.status);
-    const file=await res.json();
-    const remote=JSON.parse(b64Decode(file.content.replace(/\n/g,'')));
-    const existingIds=new Set(games.map(g=>g.id));
-    let added=0;
-    for(const g of remote){
-      if(existingIds.has(g.id))continue;
-      await dbPut(g);
-      games.push(g);
-      added++;
-    }
-    if(added){
-      games.sort((a,b)=>b.ts-a.ts);
-      updateBanner();renderHistory();renderStats();
-    }
-    showToast(added?`Restored ${added} game${added===1?'':'s'} from GitHub`:'Already up to date');
-  }catch(err){showToast('Restore failed: '+err.message)}
-}
-
 function showStatTab(tab){
   activeStatTab=tab;
   document.querySelectorAll('.tab-inner').forEach((b,i)=>{
@@ -826,12 +939,54 @@ function renderSessions(){
   }).join('');
 }
 
+async function renderLeaderboard(){
+  const el=document.getElementById('leaderboardContent');
+  el.innerHTML='<div class="empty"><p>Loading leaderboard...</p></div>';
+  const{data,error}=await sb.from('games').select('username,outcome,amount');
+  if(error){
+    el.innerHTML=`<div class="empty"><p>Failed to load leaderboard: ${error.message}</p></div><div style="text-align:center"><button class="btn btn-outline btn-sm" onclick="renderLeaderboard()">Retry</button></div>`;
+    return;
+  }
+  if(!data||!data.length){
+    el.innerHTML='<div class="empty"><div class="big">♣</div><p>No games on the leaderboard yet.</p></div>';
+    return;
+  }
+  const map={};
+  data.forEach(g=>{
+    if(!g.username)return;
+    if(!map[g.username])map[g.username]={username:g.username,games:0,wins:0,losses:0,net:0,bigWin:0,bigLoss:0};
+    const p=map[g.username];
+    p.games++;
+    if(g.outcome==='win')p.wins++;else p.losses++;
+    p.net+=g.amount;
+    if(g.amount>p.bigWin)p.bigWin=g.amount;
+    if(g.amount<p.bigLoss)p.bigLoss=g.amount;
+  });
+  const rows=Object.values(map).sort((a,b)=>b.net-a.net);
+  el.innerHTML=rows.map((p,i)=>{
+    const winRate=p.games?Math.round(p.wins/p.games*100):0;
+    const nc=p.net>0?'var(--green)':p.net<0?'var(--red)':'var(--text2)';
+    const isMe=p.username===currentUsername;
+    return`<div class="lb-row"${isMe?' style="border:1px solid var(--accent);background:var(--accent3)"':''}>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-weight:700;color:var(--text3);width:24px">${i+1}</div>
+        <div>
+          <div class="lb-name">${p.username}</div>
+          <div class="lb-sub" style="font-family:'IBM Plex Mono',monospace !important">${p.games}G · ${p.wins}W-${p.losses}L · ${winRate}% WR</div>
+        </div>
+      </div>
+      <div class="lb-net" style="color:${nc}">${formatAmt(p.net)}</div>
+    </div>`;
+  }).join('');
+}
+
 function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
-  document.querySelectorAll('.nav button').forEach((b,i)=>{b.className=['log','history','stats'][i]===p?'active':''});
+  document.querySelectorAll('.nav button').forEach((b,i)=>{b.className=['log','history','stats','board'][i]===p?'active':''});
   if(p==='stats')renderStats();
   if(p==='history')renderHistory();
+  if(p==='board')renderLeaderboard();
 }
 function showToast(msg){
   const t=document.getElementById('toast');
@@ -876,8 +1031,8 @@ if('serviceWorker' in navigator){
 openDB().then(db=>{
   DB=db;
   applyTheme(localStorage.getItem('euchre_theme')||'dark-purple');
-  loadAll();
   toggleSameStake();
+  checkExistingSession();
 });
 </script>
 </body>
