@@ -1,6 +1,6 @@
 // Cache name is generated at build time as 'euchre-v<version>-<unix timestamp>'.
 // Never edit this by hand — it is updated automatically on each build.
-const CACHE = 'euchre-v1.1-1781965713';
+const CACHE = 'euchre-v1.1-1781965956';
 const ASSETS = [
   './',
   './index.html',
@@ -24,6 +24,19 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') {
     e.respondWith(fetch(e.request));
+    return;
+  }
+  const url = new URL(e.request.url);
+  const isRootHtml = url.pathname === '/' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html');
+  if (isRootHtml) {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        if (!res || res.status !== 200 || res.type === 'opaque') return res;
+        const clone = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return res;
+      }).catch(() => caches.match(e.request).then(cached => cached || caches.match('./index.html')))
+    );
     return;
   }
   e.respondWith(
