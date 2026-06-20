@@ -984,7 +984,7 @@ function renderOverall(){
   const stakeGames=games.filter(g=>g.stake1||g.stake2);
   const avgS1=stakeGames.length?stakeGames.reduce((a,g)=>a+g.stake1,0)/stakeGames.length:0;
   const avgS2=stakeGames.length?stakeGames.reduce((a,g)=>a+g.stake2,0)/stakeGames.length:0;
-  const bumpWins=games.filter(g=>g.outcome==='win'&&g.stake1&&g.stake2&&g.amount>0);
+  const bumpWins=games.filter(g=>g.outcome==='win'&&g.amount>0&&g.stake1&&g.stake2);
   const totalBumps=bumpWins.reduce((a,g)=>a+Math.floor(Math.round((g.amount-g.stake1)/g.stake2*100)/100),0);
   const avgBumps=bumpWins.length?totalBumps/bumpWins.length:null;
   const sessIds=[...new Set(games.map(g=>g.sessionId))];
@@ -1038,11 +1038,7 @@ function renderOverall(){
     <div class="stat-box"><div class="val" style="font-size:13px">${stakeGames.length?'$'+avgS1.toFixed(0)+'/$'+avgS2.toFixed(0):'—'}</div><div class="lbl">Avg Stakes</div></div>
     <div class="stat-box"><div class="val">${stakeGames.length}</div><div class="lbl">w/ Stakes</div></div>
   </div>
-  ${avgBumps!==null?`
-  <div class="stat-grid">
-    <div class="stat-box"><div class="val" style="font-size:18px">${avgBumps.toFixed(2)}</div><div class="lbl">Avg Bumps / Win</div></div>
-    <div class="stat-box"><div class="val" style="font-size:18px">${bumpWins.length}</div><div class="lbl">Wins w/ Stakes</div></div>
-  </div>`:''}
+  ${avgBumps!==null?`<div class="stat-grid"><div class="stat-box"><div class="val" style="font-size:18px">${avgBumps.toFixed(2)}</div><div class="lbl">Avg Bumps / Win</div></div></div>`:''}
   <div class="stat-section">Streaks</div>
   <div class="stat-grid">
     <div class="stat-box"><div class="val" style="font-size:16px">${curStreak}× ${first==='win'?'W':'L'}</div><div class="lbl">Current</div></div>
