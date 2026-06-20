@@ -184,7 +184,7 @@ html.theme-light-green{
     <div id="signUpForm" style="display:none">
       <div class="field">
         <label>Username</label>
-        <input id="signUpUsername" placeholder="Choose a username, shown on leaderboard" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+        <input id="signUpUsername" placeholder="Used to sign in, not shown publicly" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
       </div>
       <div class="field">
         <label>Full Name</label>
@@ -351,6 +351,19 @@ html.theme-light-green{
         <input id="settings_stake2" type="number" min="0" step="0.25" inputmode="numeric" pattern="[0-9]*" placeholder="4" style="background:var(--bg2);border:1px solid var(--border)"/>
       </div>
       <button style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="saveDefaultStakes()">Save</button>
+    </div>
+    <div>
+      <div class="settings-heading">Edit Profile</div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Display Name</label>
+        <input id="settings_display_name" placeholder="Shown on leaderboard" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Username</label>
+        <input id="settings_username" placeholder="Used to sign in" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div id="profileEditError" style="color:var(--red);font-size:12px;margin-bottom:8px"></div>
+      <button style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleSaveProfile()">Save Profile</button>
     </div>
     <div>
       <div class="settings-heading">Change PIN</div>
@@ -1109,6 +1122,8 @@ function openSettings(){
   updateThemeButtons();
   document.getElementById('settings_stake1').value=localStorage.getItem('euchre_default_stake1')||4;
   document.getElementById('settings_stake2').value=localStorage.getItem('euchre_default_stake2')||4;
+  document.getElementById('settings_display_name').value = currentFullName || '';
+  document.getElementById('settings_username').value = currentUsername || '';
 }
 function closeSettings(){
   document.getElementById('settingsOverlay').style.display='none';
@@ -1140,6 +1155,23 @@ async function handleChangePin(){
   document.getElementById('settings_current_pin').value='';
   document.getElementById('settings_new_pin').value='';
   showToast('PIN updated');
+}
+
+async function handleSaveProfile(){
+  const newDisplayName=document.getElementById('settings_display_name').value.trim();
+  const newUsername=document.getElementById('settings_username').value.trim();
+  const errEl=document.getElementById('profileEditError');
+  errEl.textContent='';
+  if(!newDisplayName||newDisplayName.length>40){errEl.textContent='Display name is required and must be under 40 characters';return}
+  if(newUsername.length<3||newUsername.length>20||!/^[A-Za-z0-9_]+$/.test(newUsername)){errEl.textContent='Username must be 3-20 characters, letters, numbers, and underscores only';return}
+  const{error}=await sb.from('profiles').update({full_name:newDisplayName,username:newUsername}).eq('id',currentUser.id);
+  if(error){errEl.textContent='Failed to save: '+error.message;return}
+  await sb.from('games').update({full_name:newDisplayName,username:newUsername}).eq('user_id',currentUser.id);
+  currentFullName=newDisplayName;
+  currentUsername=newUsername;
+  const el=document.getElementById('headerUsername');
+  if(el)el.textContent='Hi, '+currentFullName;
+  showToast('Profile updated');
 }
 
 if('serviceWorker' in navigator){
