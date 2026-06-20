@@ -489,7 +489,8 @@ async function onAuthSuccess(user){
 }
 
 async function migrateLocalGames(){
-  if(migrationDone)return;
+  const migrationKey='migrationDone_'+(currentUser?.id||'');
+  if(migrationDone||localStorage.getItem(migrationKey))return;
   migrationDone=true;
   const local=await dbGetAll();
   if(!local.length)return;
@@ -519,6 +520,7 @@ async function migrateLocalGames(){
       const tx=DB.transaction('games','readwrite');
       tx.objectStore('games').clear().onsuccess=res;
     });
+    localStorage.setItem(migrationKey,'1');
   }
 }
 
@@ -1075,7 +1077,7 @@ async function renderLeaderboard(){
     const winRate=p.games?Math.round(p.wins/p.games*100):0;
     const nc=p.net>0?'var(--green)':p.net<0?'var(--red)':'var(--text2)';
     const isMe=p.username===currentUsername;
-    return`<div class="lb-row"${isMe?' style="border:1px solid var(--accent);background:var(--accent3)"':''}>
+    return`<div class="lb-row" onclick="showPlayerStats('${p.username}')" style="cursor:pointer;${isMe?'border:1px solid var(--accent);background:var(--accent3)':''}">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-weight:700;color:var(--text3);width:24px">${i+1}</div>
         <div>
@@ -1083,7 +1085,16 @@ async function renderLeaderboard(){
           <div class="lb-sub" style="font-family:'IBM Plex Mono',monospace !important">${p.games}G · ${p.wins}W-${p.losses}L · ${winRate}% WR</div>
         </div>
       </div>
-      <div class="lb-net" style="color:${nc}">${formatAmt(p.net)}</div>
+      ${(()=>{
+        const sortBy=document.getElementById('lbSort')?.value||'net';
+        if(sortBy==='net')return`<div class="lb-net" style="color:${nc}">${formatAmt(p.net)}</div>`;
+        if(sortBy==='winrate')return`<div class="lb-net" style="color:var(--text)">${winRate}%</div>`;
+        if(sortBy==='wins')return`<div class="lb-net" style="color:var(--green)">${p.wins}W</div>`;
+        if(sortBy==='games')return`<div class="lb-net" style="color:var(--text)">${p.games}G</div>`;
+        if(sortBy==='bigwin')return`<div class="lb-net" style="color:var(--green)">${formatAmt(p.bigWin)}</div>`;
+        if(sortBy==='bigloss')return`<div class="lb-net" style="color:var(--red)">${formatAmt(p.bigLoss)}</div>`;
+        return`<div class="lb-net" style="color:${nc}">${formatAmt(p.net)}</div>`;
+      })()}
     </div>`;
   }).join('');
 }
@@ -1172,6 +1183,44 @@ async function handleSaveProfile(){
   const el=document.getElementById('headerUsername');
   if(el)el.textContent='Hi, '+currentFullName;
   showToast('Profile updated');
+}
+
+async function showPlayerStats(username){
+  const{data,error}=await sb.from('games').select('outcome,amount,partner,opp1,opp2').eq('username',username);
+  if(error||!data||!data.length){showToast('No data found');return}
+  const total=data.length;
+  const wins=data.filter(g=>g.outcome==='win').length;
+  const losses=total-wins;
+  const net=data.reduce((a,g)=>a+Number(g.amount),0);
+  const winRate=Math.round(wins/total*100);
+  const bigWin=Math.max(...data.map(g=>Number(g.amount)));
+  const bigLoss=Math.min(...data.map(g=>Number(g.amount)));
+  const avgNet=net/total;
+  const partnerMap={};
+  data.forEach(g=>{
+    if(!partnerMap[g.partner])partnerMap[g.partner]={w:0,l:0};
+    g.outcome==='win'?partnerMap[g.partner].w++:partnerMap[g.partner].l++;
+  });
+  const bestPartnerEntry=Object.entries(partnerMap).sort((a,b)=>(b[1].w/(b[1].w+b[1].l))-(a[1].w/(a[1].w+a[1].l)))[0];
+  const{data:profile}=await sb.from('profiles').select('full_name').eq('username',username).single();
+  const displayName=profile?.full_name||username;
+  document.getElementById('modalBody').innerHTML=`
+    <h2>${displayName}</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px">
+      <div class="stat-box"><div class="val">${total}</div><div class="lbl">Games</div></div>
+      <div class="stat-box"><div class="val">${winRate}%</div><div class="lbl">Win Rate</div></div>
+      <div class="stat-box"><div class="val green">${wins}</div><div class="lbl">Wins</div></div>
+      <div class="stat-box"><div class="val red">${losses}</div><div class="lbl">Losses</div></div>
+      <div class="stat-box"><div class="val ${net>=0?'green':'red'}" style="font-size:16px">${formatAmt(net)}</div><div class="lbl">Net</div></div>
+      <div class="stat-box"><div class="val" style="font-size:16px">${formatAmt(avgNet)}</div><div class="lbl">Avg/Game</div></div>
+      <div class="stat-box"><div class="val green" style="font-size:16px">${formatAmt(bigWin)}</div><div class="lbl">Biggest Win</div></div>
+      <div class="stat-box"><div class="val red" style="font-size:16px">${formatAmt(bigLoss)}</div><div class="lbl">Biggest Loss</div></div>
+    </div>
+    ${bestPartnerEntry?`<div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;font-family:'IBM Plex Sans',sans-serif">Best Partner</div><div style="font-size:14px;font-weight:600;margin-bottom:16px">${bestPartnerEntry[0]} (${Math.round(bestPartnerEntry[1].w/(bestPartnerEntry[1].w+bestPartnerEntry[1].l)*100)}% WR)</div>`:''}
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="closeModal()">Close</button>
+    </div>`;
+  document.getElementById('modal').style.display='flex';
 }
 
 if('serviceWorker' in navigator){
