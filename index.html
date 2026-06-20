@@ -379,6 +379,9 @@ html.theme-light-green{
       <button style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleChangePin()">Update PIN</button>
     </div>
     <button class="btn btn-danger" style="width:100%" onclick="handleSignOut()">Sign Out</button>
+    <div style="text-align:center;padding-top:8px">
+      <a href="mailto:joshcohn27@gmail.com?subject=EuchreTracker Support" style="color:var(--text2);font-size:12px;text-decoration:underline;font-family:'IBM Plex Sans',sans-serif !important">Contact Support</a>
+    </div>
   </div>
 </div>
 
@@ -389,7 +392,6 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let currentUsername = null;
 let currentFullName = null;
-let migrationDone = false;
 
 let DB, games=[], currentSession=null, currentOutcome=null, activeStatTab='overall';
 let robinMode=false, robinGames=[];
@@ -444,10 +446,14 @@ async function handleSignIn(){
 async function handleForgotPin(){
   const username=(prompt('Enter your username:')||'').trim();
   if(!username)return;
-  const{data:profile,error:profileErr}=await sb.from('profiles').select('email').eq('username',username).single();
+  const{data:profile,error:profileErr}=await sb.from('profiles').select('pin').eq('username',username).single();
   if(profileErr||!profile){alert('Username not found');return}
-  await sb.auth.resetPasswordForEmail(profile.email,{redirectTo:'https://joshcohn27.github.io/euchre'});
-  showToast('Password reset email sent - check your inbox');
+  if(profile.pin){
+    const masked='•'.repeat(profile.pin.length-1)+profile.pin.slice(-1);
+    alert('Your PIN ends in: '+masked+'\n\nIf you still cannot sign in, contact support.');
+  } else {
+    alert('No PIN found for this account. Contact support at joshcohn27@gmail.com');
+  }
 }
 
 async function handleSignUp(){
@@ -501,8 +507,7 @@ async function onAuthSuccess(user){
 
 async function migrateLocalGames(){
   const migrationKey='migrationDone_'+(currentUser?.id||'');
-  if(migrationDone||localStorage.getItem(migrationKey))return;
-  migrationDone=true;
+  if(localStorage.getItem(migrationKey))return;
   const local=await dbGetAll();
   if(!local.length)return;
   const{data:remoteGames}=await sb.from('games').select('ts').eq('user_id',currentUser.id);
@@ -719,7 +724,7 @@ async function logGame(continueSession){
   }
   if(robinMode){
     robinGames.push(game);
-    if(robinGames.length>=3){showToast('Round Robin complete!');robinMode=false;robinGames=[];}
+    if(robinGames.length>=3){showToast('Round Robin complete!');robinMode=false;robinGames=[];document.getElementById('partner').value='';document.getElementById('opp1').value='';document.getElementById('opp2').value='';}
     else showToast(`Robin game ${robinGames.length}/3 logged`);
   } else showToast(currentOutcome==='win'?'Win logged':'Loss logged');
   if(!continueSession&&!robinMode){
@@ -889,12 +894,23 @@ async function saveEdit(id){
 
 async function deleteGame(id){
   if(!confirm('Delete this game?'))return;
-  await dbDeleteByTs(id);
   const deletedGame=games.find(g=>g.id===id);
-  if(currentUser&&deletedGame){
-    sb.from('games').delete().eq('user_id',currentUser.id).eq('ts',deletedGame.ts).then(({error})=>{
-      if(error)console.error('Supabase delete sync error:',error);
+  if(!deletedGame)return;
+  if(currentUser){
+    await new Promise(res=>{
+      const tx=DB.transaction('games','readwrite');
+      const store=tx.objectStore('games');
+      store.getAll().onsuccess=e=>{
+        const record=e.target.result.find(g=>g.ts===deletedGame.ts);
+        if(record)store.delete(record.id).onsuccess=res;
+        else res();
+      };
     });
+    sb.from('games').delete().eq('user_id',currentUser.id).eq('ts',deletedGame.ts).then(({error})=>{
+      if(error)console.error('Supabase delete error:',error);
+    });
+  } else {
+    await dbDelete(id);
   }
   games=games.filter(g=>g.id!==id);
   closeModal();renderHistory();renderStats();showToast('Deleted');
@@ -1085,14 +1101,14 @@ async function renderLeaderboard(){
   const map={};
   data.forEach(g=>{
     if(!g.username)return;
-    if(!map[g.username])map[g.username]={username:g.username,games:0,wins:0,losses:0,net:0,bigWin:0,bigLoss:0};
+    if(!map[g.username])map[g.username]={username:g.username,games:0,wins:0,losses:0,net:0,bigWin:null,bigLoss:null};
     const p=map[g.username];
     p.full_name=g.full_name||g.username;
     p.games++;
     if(g.outcome==='win')p.wins++;else p.losses++;
     p.net+=Number(g.amount);
-    if(Number(g.amount)>p.bigWin)p.bigWin=Number(g.amount);
-    if(Number(g.amount)<p.bigLoss)p.bigLoss=Number(g.amount);
+    if(g.outcome==='win'&&Number(g.amount)>0&&(p.bigWin===null||Number(g.amount)>p.bigWin))p.bigWin=Number(g.amount);
+    if(g.outcome==='loss'&&Number(g.amount)<0&&(p.bigLoss===null||Number(g.amount)<p.bigLoss))p.bigLoss=Number(g.amount);
   });
   const sortBy=document.getElementById('lbSort')?.value||'net';
   const rows=Object.values(map).sort((a,b)=>{
@@ -1122,8 +1138,8 @@ async function renderLeaderboard(){
         if(sortBy==='winrate')return`<div class="lb-net" style="color:var(--text)">${winRate}%</div>`;
         if(sortBy==='wins')return`<div class="lb-net" style="color:var(--green)">${p.wins}W</div>`;
         if(sortBy==='games')return`<div class="lb-net" style="color:var(--text)">${p.games}G</div>`;
-        if(sortBy==='bigwin')return`<div class="lb-net" style="color:var(--green)">${formatAmt(p.bigWin)}</div>`;
-        if(sortBy==='bigloss')return`<div class="lb-net" style="color:var(--red)">${formatAmt(p.bigLoss)}</div>`;
+        if(sortBy==='bigwin')return`<div class="lb-net" style="color:var(--green)">${p.bigWin!==null?formatAmt(p.bigWin):'—'}</div>`;
+        if(sortBy==='bigloss')return`<div class="lb-net" style="color:var(--red)">${p.bigLoss!==null?formatAmt(p.bigLoss):'—'}</div>`;
         return`<div class="lb-net" style="color:${nc}">${formatAmt(p.net)}</div>`;
       })()}
     </div>`;
@@ -1234,7 +1250,8 @@ async function showPlayerStats(username){
     if(!partnerMap[g.partner])partnerMap[g.partner]={w:0,l:0};
     g.outcome==='win'?partnerMap[g.partner].w++:partnerMap[g.partner].l++;
   });
-  const bestPartnerEntry=Object.entries(partnerMap).sort((a,b)=>(b[1].w/(b[1].w+b[1].l))-(a[1].w/(a[1].w+a[1].l)))[0];
+  const qualifiedPartners=Object.entries(partnerMap).filter(([,v])=>v.w+v.l>=2);
+  const bestPartnerEntry=qualifiedPartners.sort((a,b)=>(b[1].w/(b[1].w+b[1].l))-(a[1].w/(a[1].w+a[1].l)))[0];
   const{data:profile}=await sb.from('profiles').select('full_name').eq('username',username).single();
   const displayName=profile?.full_name||username;
   document.getElementById('modalBody').innerHTML=`
