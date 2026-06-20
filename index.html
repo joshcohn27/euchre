@@ -1036,7 +1036,6 @@ function renderOverall(){
     <div class="stat-box"><div class="val green">${bigW?formatAmt(bigW):'—'}</div><div class="lbl">Biggest Win</div></div>
     <div class="stat-box"><div class="val red">${bigL?formatAmt(bigL):'—'}</div><div class="lbl">Biggest Loss</div></div>
     <div class="stat-box"><div class="val" style="font-size:13px">${stakeGames.length?'$'+avgS1.toFixed(0)+'/$'+avgS2.toFixed(0):'—'}</div><div class="lbl">Avg Stakes</div></div>
-    <div class="stat-box"><div class="val">${stakeGames.length}</div><div class="lbl">w/ Stakes</div></div>
   </div>
   ${avgBumps!==null?`<div class="stat-grid"><div class="stat-box"><div class="val" style="font-size:18px">${avgBumps.toFixed(2)}</div><div class="lbl">Avg Bumps / Win</div></div></div>`:''}
   <div class="stat-section">Streaks</div>
