@@ -45,7 +45,7 @@ html.theme-light-green{
   --red:#dc2626;--red-bg:#fee2e2;
   --purple:var(--accent);--purple2:var(--accent2);--purple3:var(--accent3);--gold:var(--accent2);
 }
-.app{max-width:700px;margin:0 auto;padding:16px;padding-bottom:40px}
+.app{max-width:700px;margin:0 auto;padding:16px;padding-bottom:40px;padding-top:16px}
 .header{text-align:center;padding:22px 0 18px;position:relative}
 .header h1{font-size:30px;font-weight:700;letter-spacing:-0.5px;color:var(--purple2)}
 .header h1 span{color:var(--text)}
@@ -201,9 +201,19 @@ html.theme-light-green{
       <button style="width:100%;background:var(--accent);color:#fff;padding:14px;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleSignUp()">Sign Up</button>
       <div id="signUpError" style="color:var(--red);font-size:12px;margin-top:8px"></div>
     </div>
+    <div style="text-align:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+      <button onclick="viewLeaderboardOnly()" style="background:transparent;border:none;color:var(--text2);font-size:13px;cursor:pointer;text-decoration:underline;font-family:'IBM Plex Sans',sans-serif !important">View leaderboard without signing in →</button>
+    </div>
   </div>
 </div>
 <div class="app">
+  <div id="guestBar" style="display:none;background:var(--accent3);border-bottom:1px solid var(--purple);padding:10px 16px;align-items:center;justify-content:space-between;gap:10px;position:fixed;top:0;left:0;right:0;z-index:49">
+    <span style="font-size:12px;color:var(--purple2);font-family:'IBM Plex Sans',sans-serif !important">Viewing as guest</span>
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('guestBar').style.display='none';document.getElementById('authOverlay').style.display='flex';showAuthTab('signin');guestMode=false;document.querySelector('.app').style.paddingTop='16px';document.querySelector('.settings-gear').style.display='';" style="background:transparent;border:1px solid var(--purple);color:var(--purple2);font-size:12px;font-weight:600;padding:5px 10px;border-radius:var(--r);cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important">Sign In</button>
+      <button onclick="document.getElementById('guestBar').style.display='none';document.getElementById('authOverlay').style.display='flex';showAuthTab('signup');guestMode=false;document.querySelector('.app').style.paddingTop='16px';document.querySelector('.settings-gear').style.display='';" style="background:var(--accent);border:none;color:#fff;font-size:12px;font-weight:600;padding:5px 10px;border-radius:var(--r);cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important">Sign Up</button>
+    </div>
+  </div>
   <div class="header">
     <div id="headerUsername" style="position:fixed;top:0;left:0;right:0;text-align:center;background:var(--bg);padding:4px 8px;font-size:11px;z-index:50;color:var(--text2);font-weight:600;display:none"></div>
     <h1>♠ Euchre<span>Tracker</span></h1>
@@ -391,6 +401,7 @@ const SUPABASE_URL = 'https://coebedqobktxkowdepjb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvZWJlZHFvYmt0eGtvd2RlcGpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4ODEzMzYsImV4cCI6MjA5NzQ1NzMzNn0.Y08EWNUMmKSZVo8bYbeL3ZDfzfzmH7tBJF8joFtLfpc';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
+let guestMode = false;
 let currentUsername = null;
 let currentFullName = null;
 
@@ -1149,12 +1160,27 @@ async function renderLeaderboard(){
 }
 
 function showPage(p){
+  if(guestMode && p!=='board'){
+    document.getElementById('authOverlay').style.display='flex';
+    document.getElementById('guestBar').style.display='none';
+    guestMode=false;
+    return;
+  }
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
   document.querySelectorAll('.nav button').forEach((b,i)=>{b.className=['log','history','stats'][i]===p?'active':''});
   if(p==='stats')renderStats();
   if(p==='history')renderHistory();
   if(p==='board')renderLeaderboard();
+}
+function viewLeaderboardOnly(){
+  guestMode=true;
+  document.getElementById('authOverlay').style.display='none';
+  const guestBar=document.getElementById('guestBar');
+  if(guestBar)guestBar.style.display='flex';
+  document.querySelector('.app').style.paddingTop='56px';
+  document.querySelector('.settings-gear').style.display='none';
+  showPage('board');
 }
 function showToast(msg){
   const t=document.getElementById('toast');
