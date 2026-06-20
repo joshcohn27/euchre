@@ -1240,8 +1240,8 @@ async function showPlayerStats(username){
   const losses=total-wins;
   const net=data.reduce((a,g)=>a+Number(g.amount),0);
   const winRate=Math.round(wins/total*100);
-  const winAmounts=data.filter(g=>Number(g.amount)>0).map(g=>Number(g.amount));
-  const lossAmounts=data.filter(g=>Number(g.amount)<0).map(g=>Number(g.amount));
+  const winAmounts=data.filter(g=>g.outcome==='win'&&Number(g.amount)>0).map(g=>Number(g.amount));
+  const lossAmounts=data.filter(g=>g.outcome==='loss'&&Number(g.amount)<0).map(g=>Number(g.amount));
   const bigWin=winAmounts.length?Math.max(...winAmounts):null;
   const bigLoss=lossAmounts.length?Math.min(...lossAmounts):null;
   const avgNet=net/total;
