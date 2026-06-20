@@ -408,6 +408,17 @@ function openDB(){
 function dbGetAll(){return new Promise(res=>{DB.transaction('games','readonly').objectStore('games').getAll().onsuccess=e=>res(e.target.result)})}
 function dbPut(data){return new Promise(res=>{DB.transaction('games','readwrite').objectStore('games').put(data).onsuccess=e=>res(e.target.result)})}
 function dbDelete(id){return new Promise(res=>{DB.transaction('games','readwrite').objectStore('games').delete(id).onsuccess=res})}
+async function dbDeleteByTs(ts){
+  return new Promise(res=>{
+    const tx=DB.transaction('games','readwrite');
+    const store=tx.objectStore('games');
+    store.getAll().onsuccess=e=>{
+      const record=e.target.result.find(g=>g.ts===ts);
+      if(record)store.delete(record.id).onsuccess=res;
+      else res();
+    };
+  });
+}
 
 function showAuthTab(tab){
   document.getElementById('authTab-signin').className='tab-inner'+(tab==='signin'?' active':'');
@@ -547,7 +558,7 @@ async function fetchGames(){
   const{data,error}=await sb.from('games').select('*').eq('user_id',currentUser.id).order('ts',{ascending:false});
   if(error||!data)return await dbGetAll();
   return data.map(g=>({
-    id:g.id,
+    id:g.ts,
     ts:g.ts,
     partner:g.partner,
     opp1:g.opp1,
@@ -859,12 +870,32 @@ async function saveEdit(id){
   const amount=outcome==='win'?Math.abs(rawAmt):-Math.abs(rawAmt);
   Object.assign(g,{partner,opp1,opp2,outcome,stake1:s1,stake2:s2,amount,notes});
   await dbPut(g);
+  if(currentUser){
+    sb.from('games').update({
+      partner:g.partner,
+      opp1:g.opp1,
+      opp2:g.opp2,
+      outcome:g.outcome,
+      stake1:g.stake1,
+      stake2:g.stake2,
+      amount:g.amount,
+      notes:g.notes
+    }).eq('user_id',currentUser.id).eq('ts',g.ts).then(({error})=>{
+      if(error)console.error('Supabase edit sync error:',error);
+    });
+  }
   closeModal();renderHistory();renderStats();showToast('Game updated');
 }
 
 async function deleteGame(id){
   if(!confirm('Delete this game?'))return;
-  await dbDelete(id);
+  await dbDeleteByTs(id);
+  const deletedGame=games.find(g=>g.id===id);
+  if(currentUser&&deletedGame){
+    sb.from('games').delete().eq('user_id',currentUser.id).eq('ts',deletedGame.ts).then(({error})=>{
+      if(error)console.error('Supabase delete sync error:',error);
+    });
+  }
   games=games.filter(g=>g.id!==id);
   closeModal();renderHistory();renderStats();showToast('Deleted');
 }
