@@ -516,6 +516,7 @@ async function migrateLocalGames(){
   const toInsert=local.filter(g=>!existingTs.has(g.ts)).map(g=>({
     user_id:currentUser.id,
     username:currentUsername,
+    full_name:currentFullName,
     ts:g.ts,
     partner:g.partner,
     opp1:g.opp1,
