@@ -1,6 +1,6 @@
 // Cache name is generated at build time as 'euchre-v<version>-<unix timestamp>'.
 // Never edit this by hand — it is updated automatically on each build.
-const CACHE = 'euchre-v1.1-1781982814';
+const CACHE = 'euchre-v1.1-1782002957';
 const ASSETS = [
   './',
   './index.html',
@@ -17,7 +17,11 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    ).then(() => self.clients.claim()).then(() => {
+      self.clients.matchAll({type:'window'}).then(clients => {
+        clients.forEach(client => client.postMessage({type:'SW_UPDATED'}));
+      });
+    })
   );
 });
 
