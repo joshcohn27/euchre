@@ -1306,16 +1306,8 @@ async function showPlayerStats(username){
 }
 
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(reg => {
-    reg.addEventListener('updatefound', () => {
-      const newWorker = reg.installing;
-      newWorker.addEventListener('statechange', () => {
-        if(newWorker.state === 'activated') window.location.reload();
-      });
-    });
-  }).catch(()=>{});
-  navigator.serviceWorker.addEventListener('message', e => {
-    if(e.data && e.data.type === 'SW_UPDATED') window.location.reload();
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
   });
 }
 
