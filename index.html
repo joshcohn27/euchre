@@ -600,6 +600,29 @@ async function loadAll(){
   games.sort((a,b)=>b.ts-a.ts);
   renderHistory();renderStats();updateBanner();
   applyDefaultStakes();
+  const savedSession=localStorage.getItem('euchre_active_session');
+  if(savedSession){
+    try{
+      const s=JSON.parse(savedSession);
+      const sessionGames=games.filter(g=>g.sessionId===s.id);
+      if(sessionGames.length){
+        const wins=sessionGames.filter(g=>g.outcome==='win').length;
+        const net=sessionGames.reduce((a,g)=>a+g.amount,0);
+        const msg=`Resume session from ${s.name}? (${sessionGames.length}G · ${wins}W-${sessionGames.length-wins}L · ${formatAmt(net)})`;
+        if(confirm(msg)){
+          currentSession={id:s.id,name:s.name,ts:s.ts};
+          robinMode=s.robinMode||false;
+          updateBanner();
+        } else {
+          localStorage.removeItem('euchre_active_session');
+        }
+      } else {
+        localStorage.removeItem('euchre_active_session');
+      }
+    }catch(e){
+      localStorage.removeItem('euchre_active_session');
+    }
+  }
 }
 
 function knownPlayers(){
@@ -631,6 +654,18 @@ function makeSessionName(){
   const d=new Date();
   return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
 }
+function saveSessionToStorage(){
+  if(currentSession){
+    localStorage.setItem('euchre_active_session', JSON.stringify({
+      id:currentSession.id,
+      name:currentSession.name,
+      ts:currentSession.ts,
+      robinMode:robinMode
+    }));
+  } else {
+    localStorage.removeItem('euchre_active_session');
+  }
+}
 function updateBanner(){
   const b=document.getElementById('sessBanner');
   if(!currentSession){b.style.display='none';return}
@@ -641,7 +676,11 @@ function updateBanner(){
   const net=g.reduce((a,x)=>a+x.amount,0);
   document.getElementById('sessMeta').textContent=`${g.length}G · ${wins}W-${g.length-wins}L · ${formatAmt(net)}`;
 }
-function endSession(){currentSession=null;robinMode=false;robinGames=[];updateBanner();showToast('Session ended')}
+function endSession(){
+  currentSession=null;robinMode=false;robinGames=[];
+  localStorage.removeItem('euchre_active_session');
+  updateBanner();showToast('Session ended');
+}
 function startRobin(){
   const p=document.getElementById('partner').value.trim();
   const o1=document.getElementById('opp1').value.trim();
@@ -649,6 +688,7 @@ function startRobin(){
   if(!p||!o1||!o2){showToast('Fill in all 3 players first');return}
   robinMode=true;robinGames=[];
   if(!currentSession)currentSession={id:Date.now(),name:makeSessionName(),ts:Date.now()};
+  saveSessionToStorage();
   showToast('Round Robin started — log 3 games');updateBanner();
 }
 
@@ -713,7 +753,9 @@ async function logGame(continueSession){
   const lastGame=games[0];
   if(!continueSession&&!robinMode&&lastGame&&lastGame.partner!==partner)
     currentSession={id:Date.now(),name:makeSessionName(),ts:Date.now()};
+  if(!continueSession&&!robinMode&&lastGame&&lastGame.partner!==partner) saveSessionToStorage();
   if(!currentSession)currentSession={id:Date.now(),name:makeSessionName(),ts:Date.now()};
+  saveSessionToStorage();
   const amount=currentOutcome==='win'?Math.abs(rawAmt):-Math.abs(rawAmt);
   const game={ts:Date.now(),partner,opp1,opp2,outcome:currentOutcome,stake1:s1,stake2:s2,amount,notes,sessionId:currentSession.id,sessionName:currentSession.name,isRobin:robinMode};
   const id=await dbPut(game);game.id=id;games.unshift(game);
