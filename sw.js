@@ -1,6 +1,6 @@
 // Cache name is generated at build time as 'euchre-v<version>-<unix timestamp>'.
 // Never edit this by hand — it is updated automatically on each build.
-const CACHE = 'euchre-v1.1-1782243238';
+const CACHE = 'euchre-v1.1-1782243649';
 const ASSETS = [
   './',
   './index.html',
