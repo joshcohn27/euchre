@@ -342,6 +342,28 @@ html.theme-light-green{
   <div class="modal" id="modalBody"></div>
 </div>
 <div class="toast" id="toast"></div>
+<div id="newFeaturesModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--bg3);border:1px solid var(--purple);border-radius:var(--rl);padding:20px;width:100%;max-width:420px">
+    <h2 style="font-size:17px;font-weight:700;color:var(--purple2);margin-bottom:16px">What's New</h2>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:18px;flex-shrink:0">🔄</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">Resume Sessions</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.5">If you close the app mid-session, you'll be asked to resume when you come back. No more lost sessions.</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:18px;flex-shrink:0">📋</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">Reassign Games to Sessions</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.5">Edit any game in your history and use the Session dropdown to move it to a different session.</div>
+        </div>
+      </div>
+    </div>
+    <button onclick="dismissNewFeatures()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important">Got it</button>
+  </div>
+</div>
 
 <div class="settings-overlay" id="settingsOverlay">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px">
@@ -518,6 +540,7 @@ async function onAuthSuccess(user){
   await migrateLocalGames();
   await loadAll();
   updateBanner();
+  maybeShowNewFeatures();
 }
 
 async function migrateLocalGames(){
@@ -1248,6 +1271,17 @@ function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function dismissNewFeatures(){
+  document.getElementById('newFeaturesModal').style.display='none';
+  localStorage.setItem('euchre_seen_features_v2','1');
+}
+
+function maybeShowNewFeatures(){
+  if(!localStorage.getItem('euchre_seen_features_v2')){
+    document.getElementById('newFeaturesModal').style.display='flex';
+  }
 }
 
 function applyTheme(themeName){
