@@ -907,6 +907,14 @@ function showEdit(id){
     <div class="field" style="margin-bottom:0"><label>Notes</label>
       <input id="e_notes" value="${g.notes||''}" placeholder="Notes" style="background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none;width:100%"/>
     </div>
+    <div class="field" style="margin-top:13px"><label>Session</label>
+      <select id="e_session" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none">
+        ${[...new Map(games.map(g=>[g.sessionId,{id:g.sessionId,name:g.sessionName}])).values()]
+          .sort((a,b)=>b.id-a.id)
+          .map(s=>`<option value="${s.id}" data-name="${s.name}" ${s.id===g.sessionId?'selected':''}>${s.name}</option>`)
+          .join('')}
+      </select>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-outline btn-sm" onclick="showDetail(${id})">Cancel</button>
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="saveEdit(${id})">Save</button>
@@ -932,7 +940,10 @@ async function saveEdit(id){
   const outcome=window._editOutcome||g.outcome;
   if(!partner||!opp1||!opp2){showToast('All player fields required');return}
   const amount=outcome==='win'?Math.abs(rawAmt):-Math.abs(rawAmt);
-  Object.assign(g,{partner,opp1,opp2,outcome,stake1:s1,stake2:s2,amount,notes});
+  const sessionEl=document.getElementById('e_session');
+  const newSessionId=sessionEl?Number(sessionEl.value):g.sessionId;
+  const newSessionName=sessionEl?sessionEl.selectedOptions[0]?.dataset.name:g.sessionName;
+  Object.assign(g,{partner,opp1,opp2,outcome,stake1:s1,stake2:s2,amount,notes,sessionId:newSessionId,sessionName:newSessionName});
   await dbPut(g);
   if(currentUser){
     sb.from('games').update({
@@ -943,7 +954,9 @@ async function saveEdit(id){
       stake1:g.stake1,
       stake2:g.stake2,
       amount:g.amount,
-      notes:g.notes
+      notes:g.notes,
+      session_id:g.sessionId,
+      session_name:g.sessionName
     }).eq('user_id',currentUser.id).eq('ts',g.ts).then(({error})=>{
       if(error)console.error('Supabase edit sync error:',error);
     });
