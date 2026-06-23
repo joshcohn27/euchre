@@ -342,26 +342,61 @@ html.theme-light-green{
   <div class="modal" id="modalBody"></div>
 </div>
 <div class="toast" id="toast"></div>
-<div id="newFeaturesModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px">
-  <div style="background:var(--bg3);border:1px solid var(--purple);border-radius:var(--rl);padding:20px;width:100%;max-width:420px">
-    <h2 style="font-size:17px;font-weight:700;color:var(--purple2);margin-bottom:16px">What's New</h2>
-    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px">
-      <div style="display:flex;align-items:flex-start;gap:10px">
-        <span style="font-size:18px;flex-shrink:0">🔄</span>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">Resume Sessions</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.5">If you close the app mid-session, you'll be asked to resume when you come back. No more lost sessions.</div>
+<div id="changelogModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:300;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--bg3);border:1px solid var(--purple);border-radius:var(--rl);padding:20px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 style="font-size:17px;font-weight:700;color:var(--purple2);margin:0">What's New</h2>
+      <button onclick="document.getElementById('changelogModal').style.display='none'" style="background:transparent;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:4px">&times;</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--purple2);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">v1.2 — Latest</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span style="font-size:16px;flex-shrink:0">🔄</span>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">Resume Sessions</div><div style="font-size:12px;color:var(--text2);line-height:1.5">Close the app mid-session and pick up where you left off when you return.</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span style="font-size:16px;flex-shrink:0">📋</span>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">Reassign Games to Sessions</div><div style="font-size:12px;color:var(--text2);line-height:1.5">Edit any game and use the Session dropdown to move it to a different session.</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span style="font-size:16px;flex-shrink:0">🏆</span>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">Rankings label</div><div style="font-size:12px;color:var(--text2);line-height:1.5">The leaderboard button now has a Rankings label so it's easier to find.</div></div>
+          </div>
         </div>
       </div>
-      <div style="display:flex;align-items:flex-start;gap:10px">
-        <span style="font-size:18px;flex-shrink:0">📋</span>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">Reassign Games to Sessions</div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.5">Edit any game in your history and use the Session dropdown to move it to a different session.</div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">v1.1</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span style="font-size:16px;flex-shrink:0">📊</span>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">Avg Bumps / Win stat</div><div style="font-size:12px;color:var(--text2);line-height:1.5">New stat in Overall showing your average bumps per winning game.</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span style="font-size:16px;flex-shrink:0">👤</span>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">Player stats modal</div><div style="font-size:12px;color:var(--text2);line-height:1.5">Tap any player on the leaderboard to see their full stats.</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span style="font-size:16px;flex-shrink:0">👁</span>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">Guest mode</div><div style="font-size:12px;color:var(--text2);line-height:1.5">View the leaderboard without signing in.</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span style="font-size:16px;flex-shrink:0">🔁</span>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">Auto-refresh on update</div><div style="font-size:12px;color:var(--text2);line-height:1.5">App now refreshes automatically when a new version is deployed.</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">v1.0</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span style="font-size:16px;flex-shrink:0">🎉</span>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">Initial launch</div><div style="font-size:12px;color:var(--text2);line-height:1.5">Log games, track history, view stats, and compete on the leaderboard.</div></div>
+          </div>
         </div>
       </div>
     </div>
-    <button onclick="dismissNewFeatures()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important">Got it</button>
   </div>
 </div>
 
@@ -415,7 +450,8 @@ html.theme-light-green{
       <button style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleChangePin()">Update PIN</button>
     </div>
     <button class="btn btn-danger" style="width:100%" onclick="handleSignOut()">Sign Out</button>
-    <div style="text-align:center;padding-top:8px">
+    <div style="text-align:center;padding-top:8px;display:flex;justify-content:center;gap:20px">
+      <button onclick="showChangelog()" style="background:transparent;border:none;color:var(--text2);font-size:12px;cursor:pointer;text-decoration:underline;font-family:'IBM Plex Sans',sans-serif !important">What's New</button>
       <a href="mailto:joshcohn27@gmail.com?subject=EuchreTracker Support" style="color:var(--text2);font-size:12px;text-decoration:underline;font-family:'IBM Plex Sans',sans-serif !important">Contact Support</a>
     </div>
   </div>
@@ -540,7 +576,6 @@ async function onAuthSuccess(user){
   await migrateLocalGames();
   await loadAll();
   updateBanner();
-  maybeShowNewFeatures();
 }
 
 async function migrateLocalGames(){
@@ -1273,15 +1308,8 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2200);
 }
 
-function dismissNewFeatures(){
-  document.getElementById('newFeaturesModal').style.display='none';
-  localStorage.setItem('euchre_seen_features_v2','1');
-}
-
-function maybeShowNewFeatures(){
-  if(!localStorage.getItem('euchre_seen_features_v2')){
-    document.getElementById('newFeaturesModal').style.display='flex';
-  }
+function showChangelog(){
+  document.getElementById('changelogModal').style.display='flex';
 }
 
 function applyTheme(themeName){
