@@ -320,6 +320,15 @@ html.theme-light-green{
     <div id="statsContent"></div>
   </div>
 
+  <!-- ADMIN -->
+  <div id="page-admin" class="page">
+    <div class="tabs-inner">
+      <button class="tab-inner active" onclick="showAdminTab('users')">Users</button>
+      <button class="tab-inner" onclick="showAdminTab('games')">Games</button>
+    </div>
+    <div id="adminContent"></div>
+  </div>
+
   <!-- BOARD -->
   <div id="page-board" class="page">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -402,6 +411,16 @@ html.theme-light-green{
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="adminModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:300;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--bg3);border:1px solid var(--purple);border-radius:var(--rl);padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 id="adminModalTitle" style="font-size:17px;font-weight:700;color:var(--purple2);margin:0"></h2>
+      <button onclick="closeAdminModal()" style="background:transparent;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:4px">&times;</button>
+    </div>
+    <div id="adminModalBody"></div>
   </div>
 </div>
 
@@ -601,6 +620,13 @@ async function onAuthSuccess(user){
   if (el && currentUsername) {
     el.textContent = 'Hi, ' + (currentFullName || currentUsername);
     el.style.display = 'block';
+  }
+  if(currentUsername==='JCohn'){
+    const adminBtn=document.createElement('button');
+    adminBtn.textContent='⚙ Admin';
+    adminBtn.onclick=()=>showPage('admin');
+    adminBtn.style.cssText='position:fixed;top:2px;left:8px;background:transparent;border:none;color:var(--text3);font-size:10px;font-weight:700;cursor:pointer;z-index:51;font-family:\'IBM Plex Sans\',sans-serif';
+    document.body.appendChild(adminBtn);
   }
   document.getElementById('authOverlay').style.display='none';
   window.scrollTo(0, 0);
@@ -1312,7 +1338,7 @@ async function renderLeaderboard(){
 }
 
 function showPage(p){
-  if(guestMode && p!=='board'){
+  if(guestMode && p!=='board' && p!=='admin'){
     document.getElementById('authOverlay').style.display='flex';
     document.getElementById('guestBar').style.display='none';
     guestMode=false;
@@ -1321,6 +1347,7 @@ function showPage(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
   document.querySelectorAll('.nav button').forEach((b,i)=>{b.className=['log','history','stats'][i]===p?'active':''});
+  if(p==='admin')showAdminTab(activeAdminTab);
   if(p==='stats')renderStats();
   if(p==='history')renderHistory();
   if(p==='board')renderLeaderboard();
@@ -1483,6 +1510,252 @@ async function showPlayerStats(username){
       <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="closeModal()">Close</button>
     </div>`;
   document.getElementById('modal').style.display='flex';
+}
+
+const ADMIN_FUNCTION_URL='https://coebedqobktxkowdepjb.supabase.co/functions/v1/admin-actions';
+let activeAdminTab='users';
+
+async function adminCall(action, payload={}){
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session)throw new Error('Not authenticated');
+  const res=await fetch(ADMIN_FUNCTION_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+    body:JSON.stringify({action,payload})
+  });
+  const json=await res.json();
+  if(!res.ok)throw new Error(json.error||'Admin call failed');
+  return json;
+}
+
+function showAdminTab(tab){
+  activeAdminTab=tab;
+  document.querySelectorAll('#page-admin .tab-inner').forEach((b,i)=>{
+    b.className='tab-inner'+(['users','games'][i]===tab?' active':'');
+  });
+  if(tab==='users')renderAdminUsers();
+  else renderAdminGames();
+}
+
+async function renderAdminUsers(){
+  const el=document.getElementById('adminContent');
+  el.innerHTML='<div class="empty"><p>Loading...</p></div>';
+  try{
+    const data=await adminCall('get_users');
+    el._userData=data;
+    el.innerHTML=`
+      <div style="margin-bottom:12px">
+        <input id="adminUserSearch" placeholder="Search users..." oninput="filterAdminUsers()" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div id="adminUserList">
+        ${data.map(u=>`
+          <div class="lb-row" style="flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+              <div>
+                <div class="lb-name">${u.full_name||'—'} <span style="color:var(--text3);font-size:11px">@${u.username}</span></div>
+                <div class="lb-sub">${u.email||'—'} · PIN: ${u.pin||'—'}</div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-gold btn-sm" onclick="showEditUser('${u.id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="confirmBanUser('${u.id}','${(u.full_name||u.username).replace(/'/g,"\\'")}')">Ban</button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+  }catch(e){
+    el.innerHTML=`<div class="empty"><p>Error: ${e.message}</p></div>`;
+  }
+}
+
+function filterAdminUsers(){
+  const q=document.getElementById('adminUserSearch').value.toLowerCase();
+  const data=document.getElementById('adminContent')._userData;
+  if(!data)return;
+  document.querySelectorAll('#adminUserList .lb-row').forEach((row,i)=>{
+    const u=data[i];
+    const match=!q||(u.full_name||'').toLowerCase().includes(q)||(u.username||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q);
+    row.style.display=match?'':'none';
+  });
+}
+
+async function showEditUser(id){
+  const data=document.getElementById('adminContent')._userData;
+  const u=data?.find(x=>x.id===id);
+  if(!u){showToast('User not found');return}
+  document.getElementById('adminModalTitle').textContent='Edit User';
+  document.getElementById('adminModalBody').innerHTML=`
+    <div class="field"><label>Full Name</label><input id="ae_fullname" value="${u.full_name||''}" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
+    <div class="field"><label>Username</label><input id="ae_username" value="${u.username||''}" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
+    <div class="field"><label>Email</label><input id="ae_email" value="${u.email||''}" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
+    <div class="field"><label>PIN</label><input id="ae_pin" value="${u.pin||''}" maxlength="4" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
+    <div id="adminEditUserError" style="color:var(--red);font-size:12px;margin-bottom:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeAdminModal()">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="resetUserPin('${id}')">Reset Auth</button>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="saveAdminUser('${id}')">Save</button>
+    </div>`;
+  document.getElementById('adminModal').style.display='flex';
+}
+
+async function saveAdminUser(id){
+  const full_name=document.getElementById('ae_fullname').value.trim();
+  const username=document.getElementById('ae_username').value.trim();
+  const email=document.getElementById('ae_email').value.trim();
+  const pin=document.getElementById('ae_pin').value.trim();
+  const errEl=document.getElementById('adminEditUserError');
+  errEl.textContent='';
+  try{
+    await adminCall('update_user',{id,full_name,username,email,pin});
+    closeAdminModal();
+    showToast('User updated');
+    renderAdminUsers();
+  }catch(e){
+    errEl.textContent='Failed: '+e.message;
+  }
+}
+
+async function resetUserPin(id){
+  const username=document.getElementById('ae_username').value.trim();
+  const pin=document.getElementById('ae_pin').value.trim();
+  const errEl=document.getElementById('adminEditUserError');
+  if(!pin||pin.length!==4){errEl.textContent='PIN must be 4 digits';return}
+  try{
+    await adminCall('reset_auth_password',{id,username,pin});
+    showToast('Auth password reset');
+  }catch(e){
+    errEl.textContent='Reset failed: '+e.message;
+  }
+}
+
+async function confirmBanUser(id,name){
+  if(!confirm('Ban '+name+'? This will delete their profile and all their games. Cannot be undone.'))return;
+  try{
+    await adminCall('ban_user',{id});
+    showToast(name+' banned');
+    renderAdminUsers();
+  }catch(e){
+    showToast('Ban failed: '+e.message);
+  }
+}
+
+async function renderAdminGames(){
+  const el=document.getElementById('adminContent');
+  el.innerHTML='<div class="empty"><p>Loading...</p></div>';
+  try{
+    const data=await adminCall('get_games');
+    el._gameData=data;
+    el.innerHTML=`
+      <div style="margin-bottom:12px">
+        <input id="adminGameSearch" placeholder="Filter by username or player..." oninput="renderAdminGameList()" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none"/>
+      </div>
+      <div id="adminGameList"></div>`;
+    renderAdminGameList();
+  }catch(e){
+    el.innerHTML=`<div class="empty"><p>Error: ${e.message}</p></div>`;
+  }
+}
+
+function renderAdminGameList(){
+  const el=document.getElementById('adminContent');
+  const data=el._gameData;
+  if(!data)return;
+  const q=(document.getElementById('adminGameSearch')?.value||'').toLowerCase();
+  const filtered=q?data.filter(g=>[g.username,g.full_name,g.partner,g.opp1,g.opp2].some(x=>(x||'').toLowerCase().includes(q))):data;
+  document.getElementById('adminGameList').innerHTML=filtered.slice(0,50).map(g=>`
+    <div class="game-item">
+      <div class="gi-top">
+        <div>
+          <div><span class="tag ${g.outcome==='win'?'tag-win':'tag-loss'}">${g.outcome.toUpperCase()}</span> <span style="font-size:11px;color:var(--text3)">${g.full_name||g.username||'unknown'}</span></div>
+          <div class="gi-names" style="font-size:12px">w/ ${g.partner} vs ${g.opp1} & ${g.opp2}</div>
+          <div class="gi-meta">${formatDate(g.ts)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <div class="gi-amt ${g.amount>0?'pos':g.amount<0?'neg':'zero'}">${formatAmt(g.amount)}</div>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-gold btn-sm" onclick="showEditAdminGame(${g.id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAdminGame(${g.id})">Del</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('')+(filtered.length>50?`<div style="text-align:center;color:var(--text2);font-size:12px;padding:12px">Showing 50 of ${filtered.length} — filter to narrow down</div>`:'');
+}
+
+async function showEditAdminGame(id){
+  const el=document.getElementById('adminContent');
+  const g=el._gameData?.find(x=>x.id===id);
+  if(!g){showToast('Game not found');return}
+  document.getElementById('adminModalTitle').textContent='Edit Game (Admin)';
+  document.getElementById('adminModalBody').innerHTML=`
+    <div class="field"><label>Partner</label><input id="ag_partner" value="${g.partner||''}" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
+    <div class="row">
+      <div class="field"><label>Opp 1</label><input id="ag_opp1" value="${g.opp1||''}" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
+      <div class="field"><label>Opp 2</label><input id="ag_opp2" value="${g.opp2||''}" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
+    </div>
+    <div class="field"><label>Outcome</label>
+      <select id="ag_outcome" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none">
+        <option value="win" ${g.outcome==='win'?'selected':''}>Win</option>
+        <option value="loss" ${g.outcome==='loss'?'selected':''}>Loss</option>
+      </select>
+    </div>
+    <div class="field"><label>Amount ($)</label><input id="ag_amount" type="number" step="0.25" value="${Math.abs(g.amount)||''}" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
+    <div class="field"><label>Stakes</label>
+      <div class="stakes-row">
+        <input id="ag_stake1" type="number" step="0.25" value="${g.stake1||''}" style="background:var(--bg4);border:1px solid var(--border2)"/>
+        <span class="stakes-slash">/</span>
+        <input id="ag_stake2" type="number" step="0.25" value="${g.stake2||''}" style="background:var(--bg4);border:1px solid var(--border2)"/>
+      </div>
+    </div>
+    <div class="field"><label>Notes</label><input id="ag_notes" value="${g.notes||''}" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
+    <div id="adminEditGameError" style="color:var(--red);font-size:12px;margin-bottom:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeAdminModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="saveAdminGame(${id})">Save</button>
+    </div>`;
+  document.getElementById('adminModal').style.display='flex';
+}
+
+async function saveAdminGame(id){
+  const partner=document.getElementById('ag_partner').value.trim();
+  const opp1=document.getElementById('ag_opp1').value.trim();
+  const opp2=document.getElementById('ag_opp2').value.trim();
+  const outcome=document.getElementById('ag_outcome').value;
+  const rawAmt=parseFloat(document.getElementById('ag_amount').value)||0;
+  const stake1=parseFloat(document.getElementById('ag_stake1').value)||0;
+  const stake2=parseFloat(document.getElementById('ag_stake2').value)||0;
+  const notes=document.getElementById('ag_notes').value.trim();
+  const amount=outcome==='win'?Math.abs(rawAmt):-Math.abs(rawAmt);
+  const errEl=document.getElementById('adminEditGameError');
+  try{
+    await adminCall('update_game',{id,partner,opp1,opp2,outcome,amount,stake1,stake2,notes});
+    const el=document.getElementById('adminContent');
+    if(el._gameData){
+      const g=el._gameData.find(x=>x.id===id);
+      if(g)Object.assign(g,{partner,opp1,opp2,outcome,amount,stake1,stake2,notes});
+    }
+    closeAdminModal();
+    showToast('Game updated');
+    renderAdminGameList();
+  }catch(e){
+    errEl.textContent='Failed: '+e.message;
+  }
+}
+
+async function deleteAdminGame(id){
+  if(!confirm('Delete this game? Cannot be undone.'))return;
+  try{
+    await adminCall('delete_game',{id});
+    const el=document.getElementById('adminContent');
+    if(el._gameData)el._gameData=el._gameData.filter(g=>g.id!==id);
+    showToast('Game deleted');
+    renderAdminGameList();
+  }catch(e){
+    showToast('Delete failed: '+e.message);
+  }
+}
+
+function closeAdminModal(){
+  document.getElementById('adminModal').style.display='none';
 }
 
 if('serviceWorker' in navigator){
