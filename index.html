@@ -485,6 +485,13 @@ html.theme-light-green{
         <input id="settings_username" placeholder="Used to sign in" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/>
       </div>
       <div id="profileEditError" style="color:var(--red);font-size:12px;margin-bottom:8px"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:12px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border)">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Private Stats</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">Hide your stats and name from the leaderboard</div>
+        </div>
+        <input type="checkbox" id="settings_private" style="width:18px;height:18px;cursor:pointer"/>
+      </div>
       <button style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important" onclick="handleSaveProfile()">Save Profile</button>
     </div>
     <div>
@@ -1280,18 +1287,24 @@ function renderSessions(){
 async function renderLeaderboard(){
   const el=document.getElementById('leaderboardContent');
   el.innerHTML='<div class="empty"><p>Loading leaderboard...</p></div>';
-  const{data,error}=await sb.from('games').select('username,full_name,outcome,amount');
-  if(error){
-    el.innerHTML=`<div class="empty"><p>Failed to load leaderboard: ${error.message}</p></div><div style="text-align:center"><button class="btn btn-outline btn-sm" onclick="renderLeaderboard()">Retry</button></div>`;
+  const[gamesRes,profilesRes]=await Promise.all([
+    sb.from('games').select('username,full_name,outcome,amount'),
+    sb.from('profiles').select('username,stats_private')
+  ]);
+  const{data,error}=gamesRes;
+  if(error||!data){
+    el.innerHTML=`<div class="empty"><p>Failed to load leaderboard: ${error?.message||'Unknown error'}</p></div>`;
     return;
   }
-  if(!data||!data.length){
+  const privateUsers=new Set((profilesRes.data||[]).filter(p=>p.stats_private).map(p=>p.username));
+  if(!data.length){
     el.innerHTML='<div class="empty"><div class="big">♣</div><p>No games on the leaderboard yet.</p></div>';
     return;
   }
   const map={};
   data.forEach(g=>{
     if(!g.username)return;
+    if(privateUsers.has(g.username)&&g.username!==currentUsername)return;
     if(!map[g.username])map[g.username]={username:g.username,games:0,wins:0,losses:0,net:0,bigWin:null,bigLoss:null};
     const p=map[g.username];
     p.full_name=g.full_name||g.username;
@@ -1410,7 +1423,7 @@ function updateThemeButtons(){
     document.getElementById('themeBtn-'+t).classList.toggle('active',t===current);
   });
 }
-function openSettings(){
+async function openSettings(){
   const ov=document.getElementById('settingsOverlay');
   ov.style.display='flex';
   ov.style.flexDirection='column';
@@ -1421,6 +1434,8 @@ function openSettings(){
   document.getElementById('settings_stake2').value=localStorage.getItem('euchre_default_stake2')||4;
   document.getElementById('settings_display_name').value = currentFullName || '';
   document.getElementById('settings_username').value = currentUsername || '';
+  const{data:privProfile}=await sb.from('profiles').select('stats_private').eq('id',currentUser.id).single();
+  if(document.getElementById('settings_private'))document.getElementById('settings_private').checked=privProfile?.stats_private||false;
 }
 function closeSettings(){
   document.getElementById('settingsOverlay').style.display='none';
@@ -1461,7 +1476,8 @@ async function handleSaveProfile(){
   errEl.textContent='';
   if(!newDisplayName||newDisplayName.length>40){errEl.textContent='Display name is required and must be under 40 characters';return}
   if(newUsername.length<3||newUsername.length>20||!/^[A-Za-z0-9_]+$/.test(newUsername)){errEl.textContent='Username must be 3-20 characters, letters, numbers, and underscores only';return}
-  const{error}=await sb.from('profiles').update({full_name:newDisplayName,username:newUsername}).eq('id',currentUser.id);
+  const stats_private=document.getElementById('settings_private')?.checked||false;
+  const{error}=await sb.from('profiles').update({full_name:newDisplayName,username:newUsername,stats_private}).eq('id',currentUser.id);
   if(error){errEl.textContent='Failed to save: '+error.message;return}
   await sb.from('games').update({full_name:newDisplayName,username:newUsername}).eq('user_id',currentUser.id);
   currentFullName=newDisplayName;
@@ -1472,6 +1488,15 @@ async function handleSaveProfile(){
 }
 
 async function showPlayerStats(username){
+  const{data:profileCheck}=await sb.from('profiles').select('stats_private').eq('username',username).single();
+  if(profileCheck?.stats_private&&username!==currentUsername){
+    document.getElementById('modalBody').innerHTML=`
+      <h2 style="color:var(--purple2)">${username}</h2>
+      <div class="empty" style="padding:24px 0"><p>This player's stats are private.</p></div>
+      <div class="modal-actions"><button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="closeModal()">Close</button></div>`;
+    document.getElementById('modal').style.display='flex';
+    return;
+  }
   const{data,error}=await sb.from('games').select('outcome,amount,partner,opp1,opp2').eq('username',username);
   if(error||!data||!data.length){showToast('No data found');return}
   const total=data.length;
@@ -1589,6 +1614,10 @@ async function showEditUser(id){
     <div class="field"><label>Username</label><input id="ae_username" value="${u.username||''}" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
     <div class="field"><label>Email</label><input id="ae_email" value="${u.email||''}" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
     <div class="field"><label>PIN</label><input id="ae_pin" value="${u.pin||''}" maxlength="4" style="width:100%;background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:14px;padding:9px 12px;border-radius:var(--r);outline:none"/></div>
+    <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+      <label style="margin:0">Stats Private</label>
+      <input type="checkbox" id="ae_private" ${u.stats_private?'checked':''} style="width:18px;height:18px;cursor:pointer"/>
+    </div>
     <div id="adminEditUserError" style="color:var(--red);font-size:12px;margin-bottom:8px"></div>
     <div class="modal-actions">
       <button class="btn btn-outline btn-sm" onclick="closeAdminModal()">Cancel</button>
@@ -1603,10 +1632,11 @@ async function saveAdminUser(id){
   const username=document.getElementById('ae_username').value.trim();
   const email=document.getElementById('ae_email').value.trim();
   const pin=document.getElementById('ae_pin').value.trim();
+  const stats_private=document.getElementById('ae_private').checked;
   const errEl=document.getElementById('adminEditUserError');
   errEl.textContent='';
   try{
-    await adminCall('update_user',{id,full_name,username,email,pin});
+    await adminCall('update_user',{id,full_name,username,email,pin,stats_private});
     closeAdminModal();
     showToast('User updated');
     renderAdminUsers();
