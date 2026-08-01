@@ -1317,7 +1317,7 @@ function renderSessions(){
 }
 
 async function renderLeaderboard(){
-  const VERIFIED_USERS=new Set(['jghell','Abesalomon17','JCohn','nkanter1','Maxw','Clrutberg','Bryan','Kirsh']);
+  const VERIFIED_USERS=new Set(['jghell','Abesalomon17','JCohn','nkanter1','Maxw','Clrutberg','Bryan','Kirsh', 'Jj24']);
   const el=document.getElementById('leaderboardContent');
   el.innerHTML='<div class="empty"><p>Loading leaderboard...</p></div>';
   const[gamesRes,profilesRes]=await Promise.all([
