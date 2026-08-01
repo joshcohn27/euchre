@@ -14,16 +14,19 @@ The product design, feature set, UX flow, and visual design are mine end to end 
 - **History** - searchable, grouped by session, with edit/delete and CSV export
 - **Stats** - overall record, money, streaks, session performance, best/worst partners and opponents, round robin record
 - **Leaderboard** - global rankings across all users, sortable by net winnings, win rate, wins, games, biggest win/loss; tap a player to see their full stats
+- **Private stats** - users can hide their stats and name from the leaderboard and player stats modal via a settings toggle
 - **Guest mode** - view the leaderboard without signing in
 - **Accounts** - username + PIN auth (backed by Supabase Auth), with profile editing and PIN change
+- **Admin panel** - user and game management (edit/reset/ban users, edit/delete games) for the admin account, backed by a secure Supabase Edge Function
 - **Themes** - Dark Purple, Dark Green, Light Green
 - **PWA support** - installable to home screen, offline caching, and auto-refresh on new deploys via a service worker
-- **Feedback** - in-app "What's New" changelog and a "Contact Support" form (submits to a Google Form)
+- **Feedback** - in-app "What's New" changelog (with a one-time post-login nudge to check it out) and a "Contact Support" form (submits to a Google Form)
 
 ## Tech stack
 
 - Plain HTML/CSS/JS - no build step, no framework, no bundler
 - [Supabase](https://supabase.com) (`@supabase/supabase-js` via CDN) for auth, Postgres storage, and the leaderboard
+- A Supabase Edge Function (`admin-actions`, managed in the Supabase dashboard, not tracked in this repo) for privileged admin-panel operations
 - Browser `IndexedDB` for local-first storage before sign-in (auto-migrated to Supabase on first login)
 - A service worker (`sw.js`) for offline caching and cache-busting on new versions
 

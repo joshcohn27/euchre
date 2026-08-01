@@ -364,7 +364,16 @@ html.theme-light-green{
     </div>
     <div style="display:flex;flex-direction:column;gap:20px">
       <div>
-        <div style="font-size:11px;font-weight:700;color:var(--purple2);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">v1.3 — Latest</div>
+        <div style="font-size:11px;font-weight:700;color:var(--purple2);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">v1.4 — Latest</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span style="font-size:16px;flex-shrink:0">✔️</span>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">Verified Badges</div><div style="font-size:12px;color:var(--text2);line-height:1.5">Select players now show a verified badge next to their name on the leaderboard. Think you should be verified? <a href="#" onclick="showContactForm();return false" style="color:var(--accent)">Contact Support</a>.</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">v1.3</div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div style="display:flex;align-items:flex-start;gap:10px">
             <span style="font-size:16px;flex-shrink:0">🔒</span>
@@ -1307,6 +1316,7 @@ function renderSessions(){
 }
 
 async function renderLeaderboard(){
+  const VERIFIED_USERS=new Set(['jghell','Abesalomon17','JCohn','nkanter1','Maxw','Clrutberg','Bryan','Kirsh']);
   const el=document.getElementById('leaderboardContent');
   el.innerHTML='<div class="empty"><p>Loading leaderboard...</p></div>';
   const[gamesRes,profilesRes]=await Promise.all([
@@ -1354,7 +1364,7 @@ async function renderLeaderboard(){
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-weight:700;color:var(--text3);width:24px">${i+1}</div>
         <div>
-          <div class="lb-name">${p.full_name||p.username}</div>
+          <div class="lb-name">${p.full_name||p.username}${VERIFIED_USERS.has(p.username)?` <img src="https://uxwing.com/wp-content/themes/uxwing/download/checkmark-cross/verified-symbol-icon.png" style="width:13px;height:13px;vertical-align:middle;margin-left:3px;filter:hue-rotate(220deg) saturate(3) brightness(1.2)" alt="verified"/>`:''}</div>
           <div class="lb-sub" style="font-family:'IBM Plex Mono',monospace !important">${p.games}G · ${p.wins}W-${p.losses}L · ${winRate}% WR</div>
         </div>
       </div>
