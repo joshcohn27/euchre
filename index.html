@@ -1868,6 +1868,11 @@ async function renderWrapped(){
   const totalExchanged=games.reduce((a,g)=>a+Math.abs(g.amount),0);
   const avgPerGame=total?net/total:0;
 
+  const runningTotals=[0];
+  [...games].sort((a,b)=>a.ts-b.ts).forEach(g=>{runningTotals.push(runningTotals[runningTotals.length-1]+g.amount)});
+  const highWaterMark=Math.max(...runningTotals);
+  const lowWaterMark=Math.min(...runningTotals);
+
   const winGames=games.filter(g=>g.outcome==='win'&&g.amount>0);
   const lossGames=games.filter(g=>g.outcome==='loss'&&g.amount<0);
   const bigWins=[...winGames].sort((a,b)=>b.amount-a.amount).slice(0,3);
@@ -2017,6 +2022,8 @@ async function renderWrapped(){
 
     ${wCard('The Money',`
       ${statRow('Net All-Time',formatAmt(net),net>=0?'var(--green)':'var(--red)')}
+      ${statRow('High Water Mark',formatAmt(highWaterMark),'var(--green)')}
+      ${statRow('Low Water Mark',formatAmt(lowWaterMark),lowWaterMark<0?'var(--red)':'var(--text2)')}
       ${statRow('Total Money Exchanged','$'+totalExchanged.toFixed(2))}
       ${statRow('Avg Per Game',formatAmt(avgPerGame),avgPerGame>=0?'var(--green)':'var(--red)')}
       ${statRow('Avg Win',avgWin?formatAmt(avgWin):'—','var(--green)')}
