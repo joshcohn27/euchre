@@ -2048,7 +2048,7 @@ async function renderWrapped(){
       ${statRow('Net All-Time',formatAmt(net),net>=0?'var(--green)':'var(--red)')}
       ${statRow('High Water Mark',formatAmt(highWaterMark),'var(--green)')}
       ${statRow('Low Water Mark',formatAmt(lowWaterMark),lowWaterMark<0?'var(--red)':'var(--text2)')}
-      ${statRow('Total Money Exchanged','$'+totalExchanged.toFixed(2))}
+      ${statRow('Total Money Logged','$'+totalExchanged.toFixed(2))}
       ${statRow('Avg Per Game',formatAmt(avgPerGame),avgPerGame>=0?'var(--green)':'var(--red)')}
       ${statRow('Avg Win',avgWin?formatAmt(avgWin):'—','var(--green)')}
       ${statRow('Avg Loss',avgLoss?formatAmt(avgLoss):'—','var(--red)')}
@@ -2241,7 +2241,7 @@ async function renderWrapped(){
         ${statRow('Total Games Logged',totalGamesAll)}
         ${statRow('Total Wins / Losses',totalWins+'W · '+totalLosses+'L')}
         ${statRow('Group Win Rate',avgWRAll+'%')}
-        ${statRow('Total Money Exchanged','$'+totalMoneyAll.toFixed(2))}
+        ${statRow('Total Money Logged','$'+totalMoneyAll.toFixed(2))}
         ${statRow('Total Players',totalPlayers)}
         ${avgBumpsAll!==null?statRow('Avg Bumps / Win (Group)',avgBumpsAll.toFixed(2)):''}
 
