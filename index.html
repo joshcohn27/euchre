@@ -141,6 +141,7 @@ html.theme-light-green{
 .toast.show{opacity:1}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 </head>
 <body>
 <div id="authOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px">
@@ -2266,6 +2267,27 @@ async function renderWrapped(){
         responsive:true,
         plugins:{
           legend:{display:false},
+          annotation:{
+            annotations:{
+              intersession:{
+                type:'line',
+                xMin:'Jul 25',
+                xMax:'Jul 25',
+                borderColor:'rgba(167,139,250,0.6)',
+                borderWidth:1.5,
+                borderDash:[4,4],
+                label:{
+                  content:'Intersession',
+                  display:true,
+                  position:'start',
+                  color:'#a78bfa',
+                  font:{size:9,weight:'bold'},
+                  backgroundColor:'rgba(30,16,48,0.8)',
+                  padding:{x:4,y:2}
+                }
+              }
+            }
+          },
           tooltip:{
             callbacks:{
               label:ctx=>'Net: '+formatAmt(ctx.parsed.y)
