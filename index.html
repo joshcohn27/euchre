@@ -336,6 +336,7 @@ html.theme-light-green{
     <div class="tabs-inner">
       <button class="tab-inner active" onclick="showAdminTab('users')">Users</button>
       <button class="tab-inner" onclick="showAdminTab('games')">Games</button>
+      <button class="tab-inner" onclick="showPage('wrapped')">Preview Wrapped 🎴</button>
     </div>
     <div id="adminContent"></div>
   </div>
@@ -1859,7 +1860,7 @@ function closeAdminModal(){
 
 async function renderWrapped(){
   const wrappedReleaseDate = new Date('2026-08-17T00:00:00');
-  if(new Date() < wrappedReleaseDate){
+  if(new Date() < wrappedReleaseDate && currentUsername!=='JCohn'){
     document.getElementById('wrappedContent').innerHTML=`
       <div style="text-align:center;padding:60px 20px">
         <div style="font-size:48px;margin-bottom:16px">🎴</div>
