@@ -2232,15 +2232,25 @@ async function renderWrapped(){
   `;
 
   const chartGames=[...games].sort((a,b)=>a.ts-b.ts);
-  const dayNetMap={};
+  const dayBuckets=[];
+  const dayIndex={};
   chartGames.forEach(g=>{
-    const day=new Date(g.ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    dayNetMap[day]=(dayNetMap[day]||0)+g.amount;
+    const d=new Date(g.ts);
+    const dayKey=d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();
+    if(!(dayKey in dayIndex)){
+      dayIndex[dayKey]=dayBuckets.length;
+      dayBuckets.push({date:new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),label:d.toLocaleDateString('en-US',{month:'short',day:'numeric'}),net:0});
+    }
+    dayBuckets[dayIndex[dayKey]].net+=g.amount;
   });
-  const days=Object.keys(dayNetMap);
+  const intersessionDate=new Date(2026,6,25).getTime();
+  if(!dayBuckets.some(b=>b.date===intersessionDate)){
+    dayBuckets.push({date:intersessionDate,label:'Jul 25',net:0});
+    dayBuckets.sort((a,b)=>a.date-b.date);
+  }
   let running=0;
-  const chartLabels=days;
-  const chartData=days.map(d=>{running+=dayNetMap[d];return parseFloat(running.toFixed(2));});
+  const chartLabels=dayBuckets.map(b=>b.label);
+  const chartData=dayBuckets.map(b=>{running+=b.net;return parseFloat(running.toFixed(2));});
   const ctx=document.getElementById('wrappedChart');
   if(ctx){
     if(ctx._chartInstance)ctx._chartInstance.destroy();
