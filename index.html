@@ -443,6 +443,18 @@ html.theme-light-green{
   </div>
 </div>
 
+<div id="wrappedAnnouncementModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:300;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--bg3);border:1px solid var(--purple);border-radius:var(--rl);padding:24px;width:100%;max-width:380px;text-align:center">
+    <div style="font-size:48px;margin-bottom:12px">🎴</div>
+    <div style="font-size:22px;font-weight:700;color:var(--purple2);margin-bottom:8px;font-family:'IBM Plex Sans',sans-serif !important">Summer 2026 Wrapped is here</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;font-family:'IBM Plex Sans',sans-serif !important">Your full summer stats are ready. See how you stacked up, your best partners, biggest wins, and more.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button onclick="dismissWrappedAnnouncement(true)" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important">See My Wrapped 🎴</button>
+      <button onclick="dismissWrappedAnnouncement(false)" style="width:100%;padding:10px;background:transparent;color:var(--text2);border:none;font-size:13px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important">Maybe Later</button>
+    </div>
+  </div>
+</div>
+
 <div id="whatsNewNudgeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:310;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--bg3);border:1px solid var(--purple);border-radius:var(--rl);padding:20px;width:100%;max-width:340px;text-align:center">
     <div style="font-size:32px;margin-bottom:10px">🎉</div>
@@ -685,6 +697,7 @@ async function onAuthSuccess(user){
   await loadAll();
   updateBanner();
   maybeShowWhatsNewNudge();
+  maybeShowWrappedAnnouncement();
 }
 
 async function migrateLocalGames(){
@@ -1845,6 +1858,16 @@ function closeAdminModal(){
 }
 
 async function renderWrapped(){
+  const wrappedReleaseDate = new Date('2026-08-17T00:00:00');
+  if(new Date() < wrappedReleaseDate){
+    document.getElementById('wrappedContent').innerHTML=`
+      <div style="text-align:center;padding:60px 20px">
+        <div style="font-size:48px;margin-bottom:16px">🎴</div>
+        <div style="font-size:22px;font-weight:700;color:var(--purple2);margin-bottom:8px;font-family:'IBM Plex Sans',sans-serif !important">Summer 2026 Wrapped</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.6;font-family:'IBM Plex Sans',sans-serif !important">Drops August 17th.<br>Your summer stats are being compiled.</div>
+      </div>`;
+    return;
+  }
   const el=document.getElementById('wrappedContent');
   if(!currentUser){
     el.innerHTML='<div class="empty"><div class="big">🎴</div><p>Sign in to see your Summer 2026 Wrapped.</p></div>';
@@ -2334,6 +2357,20 @@ async function renderWrapped(){
       }
     });
   }
+}
+
+function maybeShowWrappedAnnouncement(){
+  const released=new Date()>=new Date('2026-08-17T00:00:00');
+  const seen=localStorage.getItem('euchre_wrapped_2026_seen');
+  if(released&&!seen){
+    document.getElementById('wrappedAnnouncementModal').style.display='flex';
+  }
+}
+
+function dismissWrappedAnnouncement(navigate){
+  localStorage.setItem('euchre_wrapped_2026_seen','1');
+  document.getElementById('wrappedAnnouncementModal').style.display='none';
+  if(navigate)showPage('wrapped');
 }
 
 if('serviceWorker' in navigator){
