@@ -1854,6 +1854,9 @@ async function renderWrapped(){
   }
   el.innerHTML='<div class="empty"><p>Loading your Wrapped...</p></div>';
 
+  const{data:allGamesData}=await sb.from('games').select('username,full_name,outcome,amount,stake1,stake2,partner,opp1,opp2,ts');
+  const allGames=allGamesData||[];
+
   const total=games.length;
   const wins=games.filter(g=>g.outcome==='win').length;
   const losses=total-wins;
@@ -2007,7 +2010,7 @@ async function renderWrapped(){
 
     ${wCard('The Money',`
       ${statRow('Net All-Time',formatAmt(net),net>=0?'var(--green)':'var(--red)')}
-      ${statRow('Total Money Exchanged','+$'+totalExchanged.toFixed(2))}
+      ${statRow('Total Money Exchanged','$'+totalExchanged.toFixed(2))}
       ${statRow('Avg Per Game',formatAmt(avgPerGame),avgPerGame>=0?'var(--green)':'var(--red)')}
       ${statRow('Avg Win',avgWin?formatAmt(avgWin):'—','var(--green)')}
       ${statRow('Avg Loss',avgLoss?formatAmt(avgLoss):'—','var(--red)')}
@@ -2068,6 +2071,68 @@ async function renderWrapped(){
       ${busiestDay?statRow('Busiest Day Ever',new Date(busiestDay[0]).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' · '+busiestDay[1]+' games'):''}
       ${mostGamesOpp?statRow('Played Against Most',mostGamesOpp.name+' ('+mostGamesOpp.games+'G)'):''}
     `,'var(--accent2)'):''}
+
+    ${(()=>{
+      if(!allGames.length)return '';
+
+      const playerMap={};
+      allGames.forEach(g=>{
+        if(!g.username)return;
+        if(!playerMap[g.username])playerMap[g.username]={username:g.username,full_name:g.full_name,games:0,wins:0,net:0,amounts:[]};
+        playerMap[g.username].games++;
+        if(g.outcome==='win')playerMap[g.username].wins++;
+        playerMap[g.username].net+=Number(g.amount);
+        playerMap[g.username].amounts.push(Number(g.amount));
+      });
+
+      const allPlayers=Object.values(playerMap);
+      const myStats=playerMap[currentUsername];
+      if(!myStats)return '';
+
+      const totalGamesPlayed=allGames.length;
+      const myGamePct=totalGamesPlayed?Math.round(myStats.games/totalGamesPlayed*100):0;
+
+      const byNet=[...allPlayers].sort((a,b)=>b.net-a.net);
+      const byWinRate=[...allPlayers].filter(p=>p.games>=5).sort((a,b)=>(b.wins/b.games)-(a.wins/a.games));
+      const byGames=[...allPlayers].sort((a,b)=>b.games-a.games);
+
+      const netRank=byNet.findIndex(p=>p.username===currentUsername)+1;
+      const wrRank=byWinRate.findIndex(p=>p.username===currentUsername)+1;
+      const gamesRank=byGames.findIndex(p=>p.username===currentUsername)+1;
+
+      const netPct=netRank?Math.round((1-netRank/byNet.length)*100):null;
+      const wrPct=wrRank?Math.round((1-wrRank/byWinRate.length)*100):null;
+
+      const totalMoneyMoved=allGames.reduce((a,g)=>a+Math.abs(Number(g.amount)),0);
+      const myMoneyPct=totalMoneyMoved?Math.round(Math.abs(myStats.net)/totalMoneyMoved*100):0;
+
+      const avgNetAllPlayers=allPlayers.length?allPlayers.reduce((a,p)=>a+p.net,0)/allPlayers.length:0;
+      const avgWRAllPlayers=allPlayers.length?allPlayers.reduce((a,p)=>a+(p.wins/Math.max(p.games,1)),0)/allPlayers.length:0;
+
+      const rivalryMap={};
+      allGames.forEach(g=>{
+        if(g.username!==currentUsername)return;
+        [g.opp1,g.opp2].forEach(o=>{
+          if(!rivalryMap[o])rivalryMap[o]={name:o,games:0,wins:0,net:0};
+          rivalryMap[o].games++;
+          if(g.outcome==='win'){rivalryMap[o].wins++;rivalryMap[o].net+=Number(g.amount);}
+          else{rivalryMap[o].net+=Number(g.amount);}
+        });
+      });
+      const topRivalry=Object.values(rivalryMap).filter(r=>r.games>=3).sort((a,b)=>b.games-a.games)[0];
+
+      return wCard('How You Stack Up',`
+        ${statRow('Net Rank','#'+netRank+' of '+byNet.length+(netPct!==null?' · top '+netPct+'%':''),net>=0?'var(--green)':'var(--red)')}
+        ${wrRank?statRow('Win Rate Rank','#'+wrRank+' of '+byWinRate.length+(wrPct!==null?' · top '+wrPct+'%':'')):''}
+        ${statRow('Games Rank','#'+gamesRank+' of '+byGames.length+' most active')}
+        ${statRow('Your Share of All Games',myGamePct+'% of '+totalGamesPlayed+' total')}
+        ${statRow('Avg Net (All Players)',formatAmt(avgNetAllPlayers))}
+        ${statRow('Your Net vs Avg',formatAmt(net-avgNetAllPlayers),net>=avgNetAllPlayers?'var(--green)':'var(--red)')}
+        ${statRow('Avg Win Rate (All Players)',Math.round(avgWRAllPlayers*100)+'%')}
+        ${statRow('Your Win Rate vs Avg',(winPct>Math.round(avgWRAllPlayers*100)?'+':'')+(winPct-Math.round(avgWRAllPlayers*100))+'%',winPct>=Math.round(avgWRAllPlayers*100)?'var(--green)':'var(--red)')}
+        ${topRivalry?statRow('Biggest Rivalry',topRivalry.name+' · '+topRivalry.games+'G · '+topRivalry.wins+'-'+(topRivalry.games-topRivalry.wins)):''}
+      `,'var(--purple)');
+    })()}
 
     <div style="background:var(--accent3);border:1px solid var(--purple);border-radius:var(--rl);padding:20px;margin-bottom:14px;text-align:center">
       <div style="font-size:22px;font-weight:700;color:var(--purple2);margin-bottom:6px;font-family:'IBM Plex Sans',sans-serif !important">${p.type}</div>
