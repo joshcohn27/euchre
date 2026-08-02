@@ -2140,6 +2140,89 @@ async function renderWrapped(){
     </div>
 
     <div style="text-align:center;padding:16px 0 8px;color:var(--text3);font-size:11px;font-family:'IBM Plex Sans',sans-serif !important">Summer 2026 · EuchreTracker</div>
+
+    ${(()=>{
+      if(!allGames.length)return '';
+
+      const playerMap={};
+      allGames.forEach(g=>{
+        if(!g.username)return;
+        if(!playerMap[g.username])playerMap[g.username]={username:g.username,full_name:g.full_name,games:0,wins:0,net:0};
+        playerMap[g.username].games++;
+        if(g.outcome==='win')playerMap[g.username].wins++;
+        playerMap[g.username].net+=Number(g.amount);
+      });
+
+      const allPlayers=Object.values(playerMap);
+      const totalGamesAll=allGames.length;
+      const totalMoneyAll=allGames.reduce((a,g)=>a+Math.abs(Number(g.amount)),0);
+      const totalWins=allGames.filter(g=>g.outcome==='win').length;
+      const totalLosses=totalGamesAll-totalWins;
+      const avgWRAll=Math.round(totalWins/totalGamesAll*100);
+
+      const allBigWins=[...allGames].filter(g=>g.outcome==='win'&&Number(g.amount)>0).sort((a,b)=>Number(b.amount)-Number(a.amount)).slice(0,3);
+      const allBigLosses=[...allGames].filter(g=>g.outcome==='loss'&&Number(g.amount)<0).sort((a,b)=>Number(a.amount)-Number(b.amount)).slice(0,3);
+
+      const richest=[...allPlayers].sort((a,b)=>b.net-a.net)[0];
+      const brokest=[...allPlayers].sort((a,b)=>a.net-b.net)[0];
+      const mostActive=[...allPlayers].sort((a,b)=>b.games-a.games)[0];
+      const highestWR=[...allPlayers].filter(p=>p.games>=5).sort((a,b)=>(b.wins/b.games)-(a.wins/a.games))[0];
+      const lowestWR=[...allPlayers].filter(p=>p.games>=5).sort((a,b)=>(a.wins/a.games)-(b.wins/b.games))[0];
+
+      const partnerPairMap={};
+      allGames.forEach(g=>{
+        const key=[g.username,g.partner].sort().join('|');
+        if(!partnerPairMap[key])partnerPairMap[key]={key,games:0,wins:0,net:0};
+        partnerPairMap[key].games++;
+        if(g.outcome==='win')partnerPairMap[key].wins++;
+        partnerPairMap[key].net+=Number(g.amount);
+      });
+      const topPair=Object.values(partnerPairMap).filter(p=>p.games>=3).sort((a,b)=>b.net-a.net)[0];
+      const mostPlayedPair=Object.values(partnerPairMap).sort((a,b)=>b.games-a.games)[0];
+
+      const rivalryPairMap={};
+      allGames.forEach(g=>{
+        [g.opp1,g.opp2].forEach(o=>{
+          const key=[g.username,o].sort().join('|');
+          if(!rivalryPairMap[key])rivalryPairMap[key]={key,games:0};
+          rivalryPairMap[key].games++;
+        });
+      });
+      const biggestRivalry=Object.values(rivalryPairMap).sort((a,b)=>b.games-a.games)[0];
+
+      const avgBumpsAll=(()=>{
+        const bw=allGames.filter(g=>g.outcome==='win'&&Number(g.amount)>0&&g.stake1&&g.stake2);
+        if(!bw.length)return null;
+        const tb=bw.reduce((a,g)=>a+Math.floor(Math.round((Number(g.amount)-Number(g.stake1))/Number(g.stake2)*100)/100),0);
+        return tb/bw.length;
+      })();
+
+      return wCard('Summer 2026 · Group Stats',`
+        <div style="font-size:10px;font-weight:700;color:var(--purple2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:'IBM Plex Sans',sans-serif !important">Overall</div>
+        ${statRow('Total Games Logged',totalGamesAll)}
+        ${statRow('Total Wins / Losses',totalWins+'W · '+totalLosses+'L')}
+        ${statRow('Group Win Rate',avgWRAll+'%')}
+        ${statRow('Total Money Exchanged','$'+totalMoneyAll.toFixed(2))}
+        ${statRow('Total Players',allPlayers.length)}
+        ${avgBumpsAll!==null?statRow('Avg Bumps / Win (Group)',avgBumpsAll.toFixed(2)):''}
+
+        <div style="font-size:10px;font-weight:700;color:var(--purple2);text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px;font-family:'IBM Plex Sans',sans-serif !important">Leaderboard Highlights</div>
+        ${richest?statRow('Richest Player',(richest.full_name||richest.username)+' · '+formatAmt(richest.net),'var(--green)'):''}
+        ${brokest&&brokest.username!==richest?.username?statRow('Most in the Hole',(brokest.full_name||brokest.username)+' · '+formatAmt(brokest.net),'var(--red)'):''}
+        ${mostActive?statRow('Most Active',(mostActive.full_name||mostActive.username)+' · '+mostActive.games+'G'):''}
+        ${highestWR?statRow('Highest Win Rate',(highestWR.full_name||highestWR.username)+' · '+Math.round(highestWR.wins/highestWR.games*100)+'%','var(--green)'):''}
+        ${lowestWR&&lowestWR.username!==highestWR?.username?statRow('Lowest Win Rate',(lowestWR.full_name||lowestWR.username)+' · '+Math.round(lowestWR.wins/lowestWR.games*100)+'%','var(--red)'):''}
+
+        <div style="font-size:10px;font-weight:700;color:var(--purple2);text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px;font-family:'IBM Plex Sans',sans-serif !important">Biggest Games</div>
+        ${allBigWins.map((g,i)=>rankRow(i,(g.full_name||g.username)+' w/ '+g.partner,formatAmt(Number(g.amount)),'var(--green)')).join('')}
+        ${allBigLosses.map((g,i)=>rankRow(i,(g.full_name||g.username)+' w/ '+g.partner,formatAmt(Number(g.amount)),'var(--red)')).join('')}
+
+        <div style="font-size:10px;font-weight:700;color:var(--purple2);text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px;font-family:'IBM Plex Sans',sans-serif !important">Partnerships</div>
+        ${topPair?statRow('Most Profitable Duo',topPair.key.replace('|',' & ')+' · '+formatAmt(topPair.net),'var(--green)'):''}
+        ${mostPlayedPair?statRow('Most Games Together',mostPlayedPair.key.replace('|',' & ')+' · '+mostPlayedPair.games+'G'):''}
+        ${biggestRivalry?statRow('Biggest Rivalry',biggestRivalry.key.replace('|',' & ')+' · '+biggestRivalry.games+'G'):''}
+      `,'var(--purple)');
+    })()}
   `;
 }
 
