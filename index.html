@@ -2039,35 +2039,35 @@ async function renderWrapped(){
       ${topPartners.map((p,i)=>rankRow(i,p.name,p.w+'-'+p.l+' · '+formatAmt(p.net),p.net>=0?'var(--green)':'var(--red)')).join('')}
       ${worstPartner&&worstPartner.name!==topPartners[0]?.name?`<div style="margin-top:10px;padding-top:4px">${statRow('Worst Partner',worstPartner.name+' ('+Math.round(worstPartner.w/worstPartner.games*100)+'% WR)','var(--red)')}</div>`:''}
       ${mostGamesPartner?statRow('Most Games With',mostGamesPartner.name+' ('+mostGamesPartner.games+'G)'):''}
-    `,'var(--accent)')}
+    `,'var(--accent)'):''}
 
     ${easiestOpps.length?wCard('Opponents',`
       <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Sans',sans-serif !important">Easiest</div>
       ${easiestOpps.map((o,i)=>rankRow(i,o.name,o.w+'-'+o.l+' · '+formatAmt(o.net),'var(--green)')).join('')}
       <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px;font-family:'IBM Plex Sans',sans-serif !important">Toughest</div>
       ${toughestOpps.map((o,i)=>rankRow(i,o.name,o.w+'-'+o.l+' · '+formatAmt(o.net),'var(--red)')).join('')}
-    `,'var(--accent)')}
+    `,'var(--accent)'):''}
 
     ${mostMoneyFrom.length?wCard('Follow the Money',`
       <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Sans',sans-serif !important">Most Won From</div>
       ${mostMoneyFrom.map((o,i)=>rankRow(i,o.name,formatAmt(o.net),'var(--green)')).join('')}
       <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px;font-family:'IBM Plex Sans',sans-serif !important">Most Lost To</div>
       ${mostMoneyTo.map((o,i)=>rankRow(i,o.name,formatAmt(o.net),'var(--red)')).join('')}
-    `,'var(--accent)')}
+    `,'var(--accent)'):''}
 
     ${bestSession?wCard('Sessions',`
       ${statRow('Total Sessions',sessions.length)}
       ${bestSession?statRow('Best Session',bestSession.name+' · '+formatAmt(bestSession.net),'var(--green)'):''}
       ${worstSession&&worstSession.id!==bestSession.id?statRow('Worst Session',worstSession.name+' · '+formatAmt(worstSession.net),'var(--red)'):''}
       ${biggestSession?statRow('Most Games in a Session',biggestSession.name+' · '+biggestSession.games+'G'):''}
-    `,'var(--accent2)')}
+    `,'var(--accent2)'):''}
 
     ${favTime||favDay?wCard('When You Play',`
       ${favTime?statRow('Favorite Time',favTime[0]+' ('+favTime[1]+' games)'):''}
       ${favDay?statRow('Favorite Day',favDay[0]+' ('+favDay[1]+' games)'):''}
       ${busiestDay?statRow('Busiest Day Ever',new Date(busiestDay[0]).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' · '+busiestDay[1]+' games'):''}
       ${mostGamesOpp?statRow('Played Against Most',mostGamesOpp.name+' ('+mostGamesOpp.games+'G)'):''}
-    `,'var(--accent2)')}
+    `,'var(--accent2)'):''}
 
     <div style="background:var(--accent3);border:1px solid var(--purple);border-radius:var(--rl);padding:20px;margin-bottom:14px;text-align:center">
       <div style="font-size:22px;font-weight:700;color:var(--purple2);margin-bottom:6px;font-family:'IBM Plex Sans',sans-serif !important">${p.type}</div>
