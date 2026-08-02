@@ -221,6 +221,10 @@ html.theme-light-green{
       <span style="font-size:18px">🏆</span>
       <span style="font-size:8px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;font-family:'IBM Plex Sans',sans-serif !important">Rankings</span>
     </button>
+    <button onclick="showPage('wrapped')" style="position:absolute;top:22px;left:60px;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px;display:flex;flex-direction:column;align-items:center;gap:1px">
+      <span style="font-size:18px">🎴</span>
+      <span style="font-size:8px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;font-family:'IBM Plex Sans',sans-serif !important">Wrapped</span>
+    </button>
     <button class="settings-gear" onclick="openSettings()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
   <nav class="nav">
@@ -318,6 +322,11 @@ html.theme-light-green{
       <button class="tab-inner" onclick="showStatTab('sessions')">Sessions</button>
     </div>
     <div id="statsContent"></div>
+  </div>
+
+  <!-- WRAPPED -->
+  <div id="page-wrapped" class="page">
+    <div id="wrappedContent"></div>
   </div>
 
   <!-- ADMIN -->
@@ -1384,7 +1393,7 @@ async function renderLeaderboard(){
 }
 
 function showPage(p){
-  if(guestMode && p!=='board' && p!=='admin'){
+  if(guestMode && p!=='board' && p!=='admin' && p!=='wrapped'){
     document.getElementById('authOverlay').style.display='flex';
     document.getElementById('guestBar').style.display='none';
     guestMode=false;
@@ -1397,6 +1406,7 @@ function showPage(p){
   if(p==='stats')renderStats();
   if(p==='history')renderHistory();
   if(p==='board')renderLeaderboard();
+  if(p==='wrapped')renderWrapped();
 }
 function viewLeaderboardOnly(){
   guestMode=true;
@@ -1830,6 +1840,242 @@ async function deleteAdminGame(id){
 
 function closeAdminModal(){
   document.getElementById('adminModal').style.display='none';
+}
+
+async function renderWrapped(){
+  const el=document.getElementById('wrappedContent');
+  if(!currentUser){
+    el.innerHTML='<div class="empty"><div class="big">🎴</div><p>Sign in to see your Summer 2026 Wrapped.</p></div>';
+    return;
+  }
+  if(!games.length){
+    el.innerHTML='<div class="empty"><div class="big">🎴</div><p>Log some games first to see your Wrapped.</p></div>';
+    return;
+  }
+  el.innerHTML='<div class="empty"><p>Loading your Wrapped...</p></div>';
+
+  const total=games.length;
+  const wins=games.filter(g=>g.outcome==='win').length;
+  const losses=total-wins;
+  const winPct=total?Math.round(wins/total*100):0;
+  const net=games.reduce((a,g)=>a+g.amount,0);
+  const totalExchanged=games.reduce((a,g)=>a+Math.abs(g.amount),0);
+  const avgPerGame=total?net/total:0;
+
+  const winGames=games.filter(g=>g.outcome==='win'&&g.amount>0);
+  const lossGames=games.filter(g=>g.outcome==='loss'&&g.amount<0);
+  const bigWins=[...winGames].sort((a,b)=>b.amount-a.amount).slice(0,3);
+  const bigLosses=[...lossGames].sort((a,b)=>a.amount-b.amount).slice(0,3);
+
+  const avgWin=winGames.length?winGames.reduce((a,g)=>a+g.amount,0)/winGames.length:0;
+  const avgLoss=lossGames.length?lossGames.reduce((a,g)=>a+g.amount,0)/lossGames.length:0;
+
+  const bumpWins=games.filter(g=>g.outcome==='win'&&g.amount>0&&g.stake1&&g.stake2);
+  const totalBumps=bumpWins.reduce((a,g)=>a+Math.floor(Math.round((g.amount-g.stake1)/g.stake2*100)/100),0);
+  const avgBumps=bumpWins.length?totalBumps/bumpWins.length:null;
+  const maxBumpGame=bumpWins.length?bumpWins.reduce((best,g)=>{
+    const bumps=Math.floor(Math.round((g.amount-g.stake1)/g.stake2*100)/100);
+    const bestBumps=Math.floor(Math.round((best.amount-best.stake1)/best.stake2*100)/100);
+    return bumps>bestBumps?g:best;
+  },bumpWins[0]):null;
+  const maxBumps=maxBumpGame?Math.floor(Math.round((maxBumpGame.amount-maxBumpGame.stake1)/maxBumpGame.stake2*100)/100):0;
+
+  const sessIds=[...new Set(games.map(g=>g.sessionId))];
+  const sessions=sessIds.map(sid=>{
+    const sg=games.filter(g=>g.sessionId===sid);
+    const snet=sg.reduce((a,g)=>a+g.amount,0);
+    return{id:sid,name:sg[0]?.sessionName||'Session',games:sg.length,net:snet,wins:sg.filter(g=>g.outcome==='win').length};
+  });
+  const bestSession=[...sessions].sort((a,b)=>b.net-a.net)[0];
+  const worstSession=[...sessions].sort((a,b)=>a.net-b.net)[0];
+  const biggestSession=[...sessions].sort((a,b)=>b.games-a.games)[0];
+  const avgGamesPerSession=sessions.length?total/sessions.length:0;
+
+  let curStreak=0,maxWStreak=0,maxLStreak=0,tmpW=0,tmpL=0;
+  const first=games[0]?.outcome;
+  for(const g of games){if(g.outcome===first)curStreak++;else break}
+  for(const g of [...games].reverse()){
+    if(g.outcome==='win'){tmpW++;tmpL=0;maxWStreak=Math.max(maxWStreak,tmpW)}
+    else{tmpL++;tmpW=0;maxLStreak=Math.max(maxLStreak,tmpL)}
+  }
+
+  const partnerMap={};
+  games.forEach(g=>{
+    if(!partnerMap[g.partner])partnerMap[g.partner]={name:g.partner,w:0,l:0,net:0,games:0};
+    partnerMap[g.partner].games++;
+    if(g.outcome==='win')partnerMap[g.partner].w++;
+    else partnerMap[g.partner].l++;
+    partnerMap[g.partner].net+=g.amount;
+  });
+  const qualPartners=Object.values(partnerMap).filter(p=>p.games>=3);
+  const partnerScore=p=>(p.w/p.games)*0.4+(p.net/Math.max(Math.abs(p.net),1))*0.4+(p.games/total)*0.2;
+  const topPartners=[...qualPartners].sort((a,b)=>partnerScore(b)-partnerScore(a)).slice(0,3);
+  const worstPartner=[...qualPartners].sort((a,b)=>partnerScore(a)-partnerScore(b))[0];
+  const mostGamesPartner=[...Object.values(partnerMap)].sort((a,b)=>b.games-a.games)[0];
+
+  const oppMap={};
+  games.forEach(g=>{
+    [g.opp1,g.opp2].forEach(o=>{
+      if(!oppMap[o])oppMap[o]={name:o,w:0,l:0,net:0,games:0};
+      oppMap[o].games++;
+      if(g.outcome==='win'){oppMap[o].w++;oppMap[o].net+=g.amount;}
+      else{oppMap[o].l++;oppMap[o].net+=g.amount;}
+    });
+  });
+  const qualOpps=Object.values(oppMap).filter(o=>o.games>=3);
+  const oppScore=o=>(o.w/o.games)*0.5+(o.net/Math.max(Math.abs(o.net),1))*0.5;
+  const easiestOpps=[...qualOpps].sort((a,b)=>oppScore(b)-oppScore(a)).slice(0,3);
+  const toughestOpps=[...qualOpps].sort((a,b)=>oppScore(a)-oppScore(b)).slice(0,3);
+  const mostMoneyFrom=[...qualOpps].sort((a,b)=>b.net-a.net).slice(0,3);
+  const mostMoneyTo=[...qualOpps].sort((a,b)=>a.net-b.net).slice(0,3);
+  const mostGamesOpp=[...Object.values(oppMap)].sort((a,b)=>b.games-a.games)[0];
+
+  const hourMap={};
+  games.forEach(g=>{
+    const h=new Date(g.ts).getHours();
+    const bucket=h<12?'Morning':h<17?'Afternoon':h<21?'Evening':'Night';
+    hourMap[bucket]=(hourMap[bucket]||0)+1;
+  });
+  const favTime=Object.entries(hourMap).sort((a,b)=>b[1]-a[1])[0];
+
+  const dayMap={};
+  games.forEach(g=>{
+    const d=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(g.ts).getDay()];
+    dayMap[d]=(dayMap[d]||0)+1;
+  });
+  const favDay=Object.entries(dayMap).sort((a,b)=>b[1]-a[1])[0];
+
+  const dateMap={};
+  games.forEach(g=>{
+    const d=new Date(g.ts).toDateString();
+    dateMap[d]=(dateMap[d]||0)+1;
+  });
+  const busiestDay=Object.entries(dateMap).sort((a,b)=>b[1]-a[1])[0];
+
+  const personality=()=>{
+    if(winPct>=70&&net>0)return{type:'The Shark',desc:'Dominant win rate and positive net. You are built different.'};
+    if(winPct>=60)return{type:'The Closer',desc:'You win when it counts. Clutch performer.'};
+    if(net>100&&winPct<50)return{type:'The High Roller',desc:'Your wins are big even when you lose more than you win.'};
+    if(avgBumps&&avgBumps>=2)return{type:'The Grinder',desc:'You rack up bumps and bleed the table dry slowly.'};
+    if(maxLStreak>=5)return{type:'The Comeback Kid',desc:'You take the hits and keep coming back.'};
+    if(sessions.length>=10)return{type:'The Regular',desc:'Always at the table. The backbone of the game.'};
+    return{type:'The Wildcard',desc:'Unpredictable. Nobody knows what you\'ll do next.'};
+  };
+  const p=personality();
+
+  const wCard=(title,content,accent='var(--accent)')=>`
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:14px;border-left:3px solid ${accent}">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);margin-bottom:12px;font-family:'IBM Plex Sans',sans-serif !important">${title}</div>
+      ${content}
+    </div>`;
+
+  const bigStat=(val,lbl,color='var(--purple2)')=>`
+    <div style="text-align:center;padding:8px 0">
+      <div style="font-size:36px;font-weight:700;color:${color};font-family:'IBM Plex Sans',sans-serif !important;line-height:1">${val}</div>
+      <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;margin-top:6px;font-family:'IBM Plex Sans',sans-serif !important">${lbl}</div>
+    </div>`;
+
+  const statRow=(label,val,color='var(--text)')=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;color:var(--text2);font-family:'IBM Plex Sans',sans-serif !important">${label}</span>
+      <span style="font-size:13px;font-weight:700;color:${color};font-family:'IBM Plex Sans',sans-serif !important">${val}</span>
+    </div>`;
+
+  const rankRow=(i,name,val,color='var(--text)')=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:11px;font-weight:700;color:var(--text3);width:16px">${i+1}</span>
+      <span style="font-size:13px;color:var(--text);flex:1;font-family:'IBM Plex Sans',sans-serif !important">${name}</span>
+      <span style="font-size:13px;font-weight:700;color:${color};font-family:'IBM Plex Sans',sans-serif !important">${val}</span>
+    </div>`;
+
+  el.innerHTML=`
+    <div style="text-align:center;padding:24px 0 20px">
+      <div style="font-size:28px;font-weight:700;color:var(--purple2);font-family:'IBM Plex Sans',sans-serif !important">Summer 2026</div>
+      <div style="font-size:14px;color:var(--text2);margin-top:4px;font-family:'IBM Plex Sans',sans-serif !important">Your Euchre Wrapped</div>
+    </div>
+
+    ${wCard('Your Season',`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px">
+        ${bigStat(total,'Games Played')}
+        ${bigStat(winPct+'%','Win Rate',winPct>=50?'var(--green)':'var(--red)')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        ${bigStat(wins,'Wins','var(--green)')}
+        ${bigStat(losses,'Losses','var(--red)')}
+      </div>
+    `,'var(--purple)')}
+
+    ${wCard('The Money',`
+      ${statRow('Net All-Time',formatAmt(net),net>=0?'var(--green)':'var(--red)')}
+      ${statRow('Total Money Exchanged','+$'+totalExchanged.toFixed(2))}
+      ${statRow('Avg Per Game',formatAmt(avgPerGame),avgPerGame>=0?'var(--green)':'var(--red)')}
+      ${statRow('Avg Win',avgWin?formatAmt(avgWin):'—','var(--green)')}
+      ${statRow('Avg Loss',avgLoss?formatAmt(avgLoss):'—','var(--red)')}
+      ${statRow('Sessions Played',sessions.length)}
+      ${statRow('Avg Games / Session',avgGamesPerSession.toFixed(1))}
+    `,'var(--green)')}
+
+    ${bigWins.length?wCard('Biggest Wins',`
+      ${bigWins.map((g,i)=>rankRow(i,`w/ ${g.partner} vs ${g.opp1} & ${g.opp2}`,formatAmt(g.amount),'var(--green)')).join('')}
+    `,'var(--green)'):''}
+
+    ${bigLosses.length?wCard('Biggest Losses',`
+      ${bigLosses.map((g,i)=>rankRow(i,`w/ ${g.partner} vs ${g.opp1} & ${g.opp2}`,formatAmt(g.amount),'var(--red)')).join('')}
+    `,'var(--red)'):''}
+
+    ${wCard('Streaks',`
+      ${statRow('Current Streak',curStreak+'× '+(first==='win'?'W':'L'),first==='win'?'var(--green)':'var(--red)')}
+      ${statRow('Best Win Streak',maxWStreak+'W','var(--green)')}
+      ${statRow('Worst Loss Streak',maxLStreak+'L','var(--red)')}
+    `,'var(--accent2)')}
+
+    ${avgBumps!==null?wCard('Bumps',`
+      ${statRow('Avg Bumps / Win',avgBumps.toFixed(2))}
+      ${statRow('Total Bumps All-Time',totalBumps)}
+      ${maxBumpGame?statRow('Most Bumps in a Game',maxBumps+' bumps','var(--purple2)'):''}
+    `,'var(--purple)'):''}
+
+    ${topPartners.length?wCard('Your Best Partners',`
+      ${topPartners.map((p,i)=>rankRow(i,p.name,p.w+'-'+p.l+' · '+formatAmt(p.net),p.net>=0?'var(--green)':'var(--red)')).join('')}
+      ${worstPartner&&worstPartner.name!==topPartners[0]?.name?`<div style="margin-top:10px;padding-top:4px">${statRow('Worst Partner',worstPartner.name+' ('+Math.round(worstPartner.w/worstPartner.games*100)+'% WR)','var(--red)')}</div>`:''}
+      ${mostGamesPartner?statRow('Most Games With',mostGamesPartner.name+' ('+mostGamesPartner.games+'G)'):''}
+    `,'var(--accent)')}
+
+    ${easiestOpps.length?wCard('Opponents',`
+      <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Sans',sans-serif !important">Easiest</div>
+      ${easiestOpps.map((o,i)=>rankRow(i,o.name,o.w+'-'+o.l+' · '+formatAmt(o.net),'var(--green)')).join('')}
+      <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px;font-family:'IBM Plex Sans',sans-serif !important">Toughest</div>
+      ${toughestOpps.map((o,i)=>rankRow(i,o.name,o.w+'-'+o.l+' · '+formatAmt(o.net),'var(--red)')).join('')}
+    `,'var(--accent)')}
+
+    ${mostMoneyFrom.length?wCard('Follow the Money',`
+      <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Sans',sans-serif !important">Most Won From</div>
+      ${mostMoneyFrom.map((o,i)=>rankRow(i,o.name,formatAmt(o.net),'var(--green)')).join('')}
+      <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px;font-family:'IBM Plex Sans',sans-serif !important">Most Lost To</div>
+      ${mostMoneyTo.map((o,i)=>rankRow(i,o.name,formatAmt(o.net),'var(--red)')).join('')}
+    `,'var(--accent)')}
+
+    ${bestSession?wCard('Sessions',`
+      ${statRow('Total Sessions',sessions.length)}
+      ${bestSession?statRow('Best Session',bestSession.name+' · '+formatAmt(bestSession.net),'var(--green)'):''}
+      ${worstSession&&worstSession.id!==bestSession.id?statRow('Worst Session',worstSession.name+' · '+formatAmt(worstSession.net),'var(--red)'):''}
+      ${biggestSession?statRow('Most Games in a Session',biggestSession.name+' · '+biggestSession.games+'G'):''}
+    `,'var(--accent2)')}
+
+    ${favTime||favDay?wCard('When You Play',`
+      ${favTime?statRow('Favorite Time',favTime[0]+' ('+favTime[1]+' games)'):''}
+      ${favDay?statRow('Favorite Day',favDay[0]+' ('+favDay[1]+' games)'):''}
+      ${busiestDay?statRow('Busiest Day Ever',new Date(busiestDay[0]).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' · '+busiestDay[1]+' games'):''}
+      ${mostGamesOpp?statRow('Played Against Most',mostGamesOpp.name+' ('+mostGamesOpp.games+'G)'):''}
+    `,'var(--accent2)')}
+
+    <div style="background:var(--accent3);border:1px solid var(--purple);border-radius:var(--rl);padding:20px;margin-bottom:14px;text-align:center">
+      <div style="font-size:22px;font-weight:700;color:var(--purple2);margin-bottom:6px;font-family:'IBM Plex Sans',sans-serif !important">${p.type}</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6;font-family:'IBM Plex Sans',sans-serif !important">${p.desc}</div>
+    </div>
+
+    <div style="text-align:center;padding:16px 0 8px;color:var(--text3);font-size:11px;font-family:'IBM Plex Sans',sans-serif !important">Summer 2026 · EuchreTracker</div>
+  `;
 }
 
 if('serviceWorker' in navigator){
