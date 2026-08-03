@@ -2198,6 +2198,7 @@ async function renderWrapped(){
         playerMap[g.username].net+=Number(g.amount);
       });
       const allPlayers=Object.values(playerMap);
+      const dispName=n=>(playerMap[n]&&playerMap[n].full_name)||n;
 
       const allBigWins=[...verifiedGames].filter(g=>g.outcome==='win'&&Number(g.amount)>0).sort((a,b)=>Number(b.amount)-Number(a.amount)).slice(0,5);
       const allBigLosses=[...verifiedGames].filter(g=>g.outcome==='loss'&&Number(g.amount)<0).sort((a,b)=>Number(a.amount)-Number(b.amount)).slice(0,5);
@@ -2211,23 +2212,23 @@ async function renderWrapped(){
       const partnerPairMap={};
       verifiedGames.forEach(g=>{
         const key=[g.username,g.partner].sort().join('|');
-        if(!partnerPairMap[key])partnerPairMap[key]={key,games:0,wins:0,net:0};
+        if(!partnerPairMap[key])partnerPairMap[key]={key,label:[dispName(g.username),dispName(g.partner)].join(' & '),games:0,wins:0,net:0};
         partnerPairMap[key].games++;
         if(g.outcome==='win')partnerPairMap[key].wins++;
         partnerPairMap[key].net+=Number(g.amount);
       });
-      const topPair=Object.values(partnerPairMap).filter(p=>p.games>=3).sort((a,b)=>b.net-a.net)[0];
+      const topPairs=Object.values(partnerPairMap).filter(p=>p.games>=3).sort((a,b)=>b.net-a.net).slice(0,3);
       const mostPlayedPair=Object.values(partnerPairMap).sort((a,b)=>b.games-a.games)[0];
 
       const rivalryPairMap={};
       verifiedGames.forEach(g=>{
         [g.opp1,g.opp2].forEach(o=>{
           const key=[g.username,o].sort().join('|');
-          if(!rivalryPairMap[key])rivalryPairMap[key]={key,games:0};
+          if(!rivalryPairMap[key])rivalryPairMap[key]={key,label:[dispName(g.username),dispName(o)].join(' & '),games:0};
           rivalryPairMap[key].games++;
         });
       });
-      const biggestRivalry=Object.values(rivalryPairMap).sort((a,b)=>b.games-a.games)[0];
+      const topRivalries=Object.values(rivalryPairMap).sort((a,b)=>b.games-a.games).slice(0,3);
 
       const avgBumpsAll=(()=>{
         const bw=allGames.filter(g=>g.outcome==='win'&&Number(g.amount)>0&&g.stake1&&g.stake2);
@@ -2257,9 +2258,11 @@ async function renderWrapped(){
         ${allBigLosses.map((g,i)=>rankRow(i,(g.full_name||g.username)+' w/ '+g.partner,formatAmt(Number(g.amount)),'var(--red)')).join('')}
 
         <div style="font-size:10px;font-weight:700;color:var(--purple2);text-transform:uppercase;letter-spacing:1px;margin:14px 0 10px;font-family:'IBM Plex Sans',sans-serif !important">Partnerships</div>
-        ${topPair?statRow('Most Profitable Duo',topPair.key.replace('|',' & ')+' · '+formatAmt(topPair.net),'var(--green)'):''}
-        ${mostPlayedPair?statRow('Most Games Together',mostPlayedPair.key.replace('|',' & ')+' · '+mostPlayedPair.games+'G'):''}
-        ${biggestRivalry?statRow('Biggest Rivalry',biggestRivalry.key.replace('|',' & ')+' · '+biggestRivalry.games+'G'):''}
+        ${mostPlayedPair?statRow('Most Games Together',mostPlayedPair.label+' · '+mostPlayedPair.games+'G'):''}
+        ${topPairs.length?`<div style="font-size:11px;color:var(--text2);margin:10px 0 4px;font-family:'IBM Plex Sans',sans-serif !important">Most Profitable Duos</div>
+        ${topPairs.map((pr,i)=>rankRow(i,pr.label,formatAmt(pr.net),'var(--green)')).join('')}`:''}
+        ${topRivalries.length?`<div style="font-size:11px;color:var(--text2);margin:10px 0 4px;font-family:'IBM Plex Sans',sans-serif !important">Biggest Rivalries</div>
+        ${topRivalries.map((r,i)=>rankRow(i,r.label,r.games+'G')).join('')}`:''}
       `,'var(--purple)');
     })()}
   `;
