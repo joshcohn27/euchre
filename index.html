@@ -1899,8 +1899,8 @@ async function renderWrapped(){
 
   const winGames=games.filter(g=>g.outcome==='win'&&g.amount>0);
   const lossGames=games.filter(g=>g.outcome==='loss'&&g.amount<0);
-  const bigWins=[...winGames].sort((a,b)=>b.amount-a.amount).slice(0,3);
-  const bigLosses=[...lossGames].sort((a,b)=>a.amount-b.amount).slice(0,3);
+  const bigWins=[...winGames].sort((a,b)=>b.amount-a.amount).slice(0,5);
+  const bigLosses=[...lossGames].sort((a,b)=>a.amount-b.amount).slice(0,5);
 
   const avgWin=winGames.length?winGames.reduce((a,g)=>a+g.amount,0)/winGames.length:0;
   const avgLoss=lossGames.length?lossGames.reduce((a,g)=>a+g.amount,0)/lossGames.length:0;
@@ -1959,10 +1959,10 @@ async function renderWrapped(){
   });
   const qualOpps=Object.values(oppMap).filter(o=>o.games>=3);
   const oppScore=o=>(o.w/o.games)*0.5+(o.net/Math.max(Math.abs(o.net),1))*0.5;
-  const easiestOpps=[...qualOpps].sort((a,b)=>oppScore(b)-oppScore(a)).slice(0,3);
-  const toughestOpps=[...qualOpps].sort((a,b)=>oppScore(a)-oppScore(b)).slice(0,3);
-  const mostMoneyFrom=[...qualOpps].sort((a,b)=>b.net-a.net).slice(0,3);
-  const mostMoneyTo=[...qualOpps].sort((a,b)=>a.net-b.net).slice(0,3);
+  const easiestOpps=[...qualOpps].sort((a,b)=>oppScore(b)-oppScore(a)).slice(0,5);
+  const toughestOpps=[...qualOpps].sort((a,b)=>oppScore(a)-oppScore(b)).slice(0,5);
+  const mostMoneyFrom=[...qualOpps].sort((a,b)=>b.net-a.net).slice(0,5);
+  const mostMoneyTo=[...qualOpps].sort((a,b)=>a.net-b.net).slice(0,5);
   const mostGamesOpp=[...Object.values(oppMap)].sort((a,b)=>b.games-a.games)[0];
 
   const hourMap={};
@@ -2199,8 +2199,8 @@ async function renderWrapped(){
       });
       const allPlayers=Object.values(playerMap);
 
-      const allBigWins=[...verifiedGames].filter(g=>g.outcome==='win'&&Number(g.amount)>0).sort((a,b)=>Number(b.amount)-Number(a.amount)).slice(0,3);
-      const allBigLosses=[...verifiedGames].filter(g=>g.outcome==='loss'&&Number(g.amount)<0).sort((a,b)=>Number(a.amount)-Number(b.amount)).slice(0,3);
+      const allBigWins=[...verifiedGames].filter(g=>g.outcome==='win'&&Number(g.amount)>0).sort((a,b)=>Number(b.amount)-Number(a.amount)).slice(0,5);
+      const allBigLosses=[...verifiedGames].filter(g=>g.outcome==='loss'&&Number(g.amount)<0).sort((a,b)=>Number(a.amount)-Number(b.amount)).slice(0,5);
 
       const richest=[...allPlayers].sort((a,b)=>b.net-a.net)[0];
       const brokest=[...allPlayers].sort((a,b)=>a.net-b.net)[0];
