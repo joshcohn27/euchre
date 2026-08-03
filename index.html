@@ -46,10 +46,10 @@ html.theme-light-green{
   --purple:var(--accent);--purple2:var(--accent2);--purple3:var(--accent3);--gold:var(--accent2);
 }
 .app{max-width:700px;margin:0 auto;padding:16px;padding-bottom:40px;padding-top:16px}
-.header{text-align:center;padding:22px 0 18px;position:relative}
+.header{text-align:center;padding:40px 0 18px;position:relative}
 .header h1{font-size:30px;font-weight:700;letter-spacing:-0.5px;color:var(--purple2)}
 .header h1 span{color:var(--text)}
-.settings-gear{position:absolute;top:22px;right:0;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px}
+.settings-gear{position:absolute;top:40px;right:0;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px}
 .settings-overlay{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;overflow-y:auto;width:100%;max-width:100vw;box-sizing:border-box}
 .settings-heading{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text2);letter-spacing:1.2px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
 .theme-btn{width:100%;padding:14px 8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--bg2);color:var(--text2);transition:all 0.15s;font-family:'IBM Plex Sans',sans-serif !important}
@@ -219,12 +219,12 @@ html.theme-light-green{
   <div class="header">
     <div id="headerUsername" style="position:fixed;top:0;left:0;right:0;text-align:center;background:var(--bg);padding:4px 8px;font-size:11px;z-index:50;color:var(--text2);font-weight:600;display:none"></div>
     <h1>♠ Euchre<span>Tracker</span></h1>
-    <button onclick="showPage('board')" style="position:absolute;top:22px;left:0;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px;display:flex;flex-direction:column;align-items:center;gap:1px">
+    <button onclick="showPage('board')" style="position:absolute;top:40px;left:0;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px;display:flex;flex-direction:column;align-items:center;gap:1px">
       <span style="font-size:18px">🏆</span>
       <span style="font-size:8px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;font-family:'IBM Plex Sans',sans-serif !important">Rankings</span>
     </button>
-    <button onclick="showPage('wrapped')" style="position:absolute;top:22px;left:60px;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px;display:flex;flex-direction:column;align-items:center;gap:1px">
-      <span style="font-size:18px">🎴</span>
+    <button onclick="showPage('wrapped')" style="position:absolute;top:0;right:4px;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:4px 8px;display:flex;flex-direction:column;align-items:center;gap:1px">
+      <span style="font-size:16px">🎴</span>
       <span style="font-size:8px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;font-family:'IBM Plex Sans',sans-serif !important">Wrapped</span>
     </button>
     <button class="settings-gear" onclick="openSettings()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
