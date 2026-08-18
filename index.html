@@ -220,6 +220,7 @@ html.theme-light-green{
     <div id="headerUsername" style="position:fixed;top:0;left:0;right:0;text-align:center;background:var(--bg);padding:4px 8px;font-size:11px;z-index:50;color:var(--text2);font-weight:600;display:none"></div>
     <button onclick="showPage('wrapped')" style="position:fixed;top:2px;right:8px;background:transparent;border:none;color:var(--text3);font-size:10px;font-weight:700;cursor:pointer;z-index:51;font-family:'IBM Plex Sans',sans-serif">🎴 Wrapped</button>
     <h1>♠ Euchre<span>Tracker</span></h1>
+    <div id="currentSeasonBadge" style="text-align:center;font-size:10px;font-weight:600;letter-spacing:0.3px;color:var(--text2);margin-top:4px;font-family:'IBM Plex Sans',sans-serif !important"></div>
     <button onclick="showPage('board')" style="position:absolute;top:22px;left:0;background:transparent;border:none;color:var(--text2);cursor:pointer;padding:8px;display:flex;flex-direction:column;align-items:center;gap:1px">
       <span style="font-size:18px">🏆</span>
       <span style="font-size:8px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;font-family:'IBM Plex Sans',sans-serif !important">Rankings</span>
@@ -314,6 +315,11 @@ html.theme-light-green{
 
   <!-- STATS -->
   <div id="page-stats" class="page">
+    <select id="statsSeason" onchange="activeStatSeason=this.value;renderStats()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none;cursor:pointer;margin-bottom:10px;width:100%">
+      <option value="all">All Time</option>
+      <option value="summer-2026">Summer 2026</option>
+      <option value="offseason-2026-2027">Offseason 2026-2027</option>
+    </select>
     <div class="tabs-inner">
       <button class="tab-inner active" onclick="showStatTab('overall')">Overall</button>
       <button class="tab-inner" onclick="showStatTab('partners')">Partners</button>
@@ -344,14 +350,21 @@ html.theme-light-green{
       <div class="section-label" style="margin:0">Leaderboard</div>
       <button onclick="renderLeaderboard()" style="background:transparent;border:none;color:var(--text2);font-size:18px;cursor:pointer">↻</button>
     </div>
-    <select id="lbSort" onchange="renderLeaderboard()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none;cursor:pointer">
-      <option value="net">Net Winnings</option>
-      <option value="winrate">Win Rate</option>
-      <option value="wins">Most Wins</option>
-      <option value="games">Most Games</option>
-      <option value="bigwin">Biggest Win</option>
-      <option value="bigloss">Biggest Loss</option>
-    </select>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <select id="lbSort" onchange="renderLeaderboard()" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none;cursor:pointer">
+        <option value="net">Net Winnings</option>
+        <option value="winrate">Win Rate</option>
+        <option value="wins">Most Wins</option>
+        <option value="games">Most Games</option>
+        <option value="bigwin">Biggest Win</option>
+        <option value="bigloss">Biggest Loss</option>
+      </select>
+      <select id="lbSeason" onchange="renderLeaderboard()" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none;cursor:pointer">
+        <option value="all">All Time</option>
+        <option value="summer-2026">Summer 2026</option>
+        <option value="offseason-2026-2027">Offseason 2026-2027</option>
+      </select>
+    </div>
     <div id="leaderboardContent"></div>
   </div>
 
@@ -444,8 +457,8 @@ html.theme-light-green{
 <div id="wrappedAnnouncementModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:300;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--bg3);border:1px solid var(--purple);border-radius:var(--rl);padding:24px;width:100%;max-width:380px;text-align:center">
     <div style="font-size:48px;margin-bottom:12px">🎴</div>
-    <div style="font-size:22px;font-weight:700;color:var(--purple2);margin-bottom:8px;font-family:'IBM Plex Sans',sans-serif !important">Summer 2026 Wrapped is here</div>
-    <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;font-family:'IBM Plex Sans',sans-serif !important">Your full summer stats are ready. See how you stacked up, your best partners, biggest wins, and more.</div>
+    <div id="wrappedAnnounceTitle" style="font-size:22px;font-weight:700;color:var(--purple2);margin-bottom:8px;font-family:'IBM Plex Sans',sans-serif !important">Wrapped is here</div>
+    <div id="wrappedAnnounceBody" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;font-family:'IBM Plex Sans',sans-serif !important">Your full stats are ready. See how you stacked up, your best partners, biggest wins, and more.</div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button onclick="dismissWrappedAnnouncement(true)" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important">See My Wrapped 🎴</button>
       <button onclick="dismissWrappedAnnouncement(false)" style="width:100%;padding:10px;background:transparent;color:var(--text2);border:none;font-size:13px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif !important">Maybe Later</button>
@@ -577,8 +590,115 @@ let currentUsername = null;
 let currentFullName = null;
 
 const VERIFIED_USERS=new Set(['jghell','Abesalomon17','JCohn','nkanter1','Maxw','Clrutberg','Bryan','Kirsh', 'Jj24', 'Hankstein']);
-let DB, games=[], currentSession=null, currentOutcome=null, activeStatTab='overall';
+
+const SEASONS = [
+  {
+    id: 'summer-2026',
+    label: 'Summer 2026',
+    type: 'summer',
+    start: new Date('2026-06-01T00:00:00'),
+    end: new Date('2026-08-16T23:59:59')
+  },
+  {
+    id: 'offseason-2026-2027',
+    label: 'Offseason 2026-2027',
+    type: 'offseason',
+    start: new Date('2026-08-17T00:00:00'),
+    end: new Date('2027-06-01T00:00:00') // placeholder end date, exact summer 2027 start TBD, update when known
+  }
+];
+
+function getSeasonForDate(dateInput){
+  const d = new Date(dateInput);
+  for(const s of SEASONS){
+    if(d >= s.start && d <= s.end) return s;
+  }
+  return null; // game falls outside all defined ranges
+}
+
+function getCurrentSeason(){
+  const now = new Date();
+  for(const s of SEASONS){
+    if(now >= s.start && now <= s.end) return s;
+  }
+  // fallback: if we're past the last defined season's end, return the last one
+  return SEASONS[SEASONS.length - 1];
+}
+
+// Filters a games array down to a single season by id. Pass 'all' (or omit) for all-time.
+// Falls back to the global `games` array when sourceGames isn't given.
+function getGamesForSeason(seasonId, sourceGames){
+  const list = sourceGames || games;
+  if(!seasonId || seasonId === 'all') return list;
+  return list.filter(g => getSeasonForDate(g.ts)?.id === seasonId);
+}
+
+// Future editions (summer-2027, 2027, etc.) get appended here the same way — no other code
+// changes are needed when that happens; the gate, countdown, defaulting, and past-editions
+// selector all derive purely from this list.
+const WRAPPED_EDITIONS = [
+  {
+    id: 'summer-2026',
+    label: 'Summer 2026',
+    dataStart: new Date('2026-06-01T00:00:00'),
+    dataEnd: new Date('2026-08-16T23:59:59'),
+    releaseDate: new Date('2026-08-17T00:00:00'),
+    defaultUntil: new Date('2026-09-30T23:59:59')
+  },
+  {
+    id: '2026',
+    label: '2026 Wrapped',
+    dataStart: new Date('2026-06-01T00:00:00'), // data actually starts June since that's when tracking began, even though this is the "2026" full-year edition
+    dataEnd: new Date('2026-12-31T23:59:59'),
+    releaseDate: new Date('2027-01-01T00:00:00'),
+    defaultUntil: new Date('2027-01-31T23:59:59')
+  }
+];
+
+function getReleasedWrappedEditions(){
+  const now = new Date();
+  return WRAPPED_EDITIONS.filter(e => now >= e.releaseDate).sort((a,b) => b.releaseDate - a.releaseDate);
+}
+
+function getDefaultWrappedEdition(){
+  const now = new Date();
+  const active = WRAPPED_EDITIONS.filter(e => now >= e.releaseDate && now <= e.defaultUntil);
+  if(active.length === 0) return null;
+  return active.sort((a,b) => b.releaseDate - a.releaseDate)[0];
+}
+
+function getNextWrappedEdition(){
+  const now = new Date();
+  const upcoming = WRAPPED_EDITIONS.filter(e => now < e.releaseDate).sort((a,b) => a.releaseDate - b.releaseDate);
+  return upcoming[0] || null; // null means no future edition defined yet, add one to WRAPPED_EDITIONS when known
+}
+
+function getGamesForEdition(editionId, sourceGames){
+  const edition = WRAPPED_EDITIONS.find(e => e.id === editionId);
+  if(!edition) return sourceGames;
+  return sourceGames.filter(g => {
+    const t = new Date(g.ts);
+    return t >= edition.dataStart && t <= edition.dataEnd;
+  });
+}
+
+// Builds the "View Past Wrapped" dropdown. Shown on the gate screen whenever at least one
+// edition has released, and on a normal Wrapped view whenever more than one edition has
+// released (so there's actually something to switch between).
+function buildWrappedEditionSelectorHtml(activeEditionId, isGate){
+  const released = getReleasedWrappedEditions();
+  if(!released.length) return '';
+  if(!isGate && released.length <= 1) return '';
+  const placeholder = isGate ? '<option value="" disabled selected>View Past Wrapped</option>' : '';
+  const options = released.map(e => `<option value="${e.id}" ${!isGate && e.id===activeEditionId ? 'selected' : ''}>${e.label}</option>`).join('');
+  return `<select onchange="if(this.value)renderWrapped(this.value)" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none;cursor:pointer;width:100%;margin-bottom:14px">${placeholder}${options}</select>`;
+}
+
+let DB, games=[], currentSession=null, currentOutcome=null, activeStatTab='overall', activeStatSeason='all';
 let robinMode=false, robinGames=[];
+
+const currentSeasonBadgeEl=document.getElementById('currentSeasonBadge');
+if(currentSeasonBadgeEl)currentSeasonBadgeEl.textContent='Current Season: '+getCurrentSeason().label;
 
 function openDB(){
   return new Promise((res,rej)=>{
@@ -1199,13 +1319,16 @@ function showStatTab(tab){
 function renderStats(){
   const el=document.getElementById('statsContent');
   if(!games.length){el.innerHTML=`<div class="empty"><div class="big">♦</div><p>Log some games first.</p></div>`;return}
-  if(activeStatTab==='overall')el.innerHTML=renderOverall();
-  else if(activeStatTab==='partners')el.innerHTML=renderByRole('partner');
-  else if(activeStatTab==='opponents')el.innerHTML=renderByRole('opponents');
-  else el.innerHTML=renderSessions();
+  const seasonGames=getGamesForSeason(activeStatSeason);
+  if(!seasonGames.length){el.innerHTML=`<div class="empty"><div class="big">♦</div><p>No games logged in this season.</p></div>`;return}
+  if(activeStatTab==='overall')el.innerHTML=renderOverall(seasonGames);
+  else if(activeStatTab==='partners')el.innerHTML=renderByRole('partner',seasonGames);
+  else if(activeStatTab==='opponents')el.innerHTML=renderByRole('opponents',seasonGames);
+  else el.innerHTML=renderSessions(seasonGames);
 }
 
-function renderOverall(){
+function renderOverall(gamesList){
+  const games=gamesList;
   const total=games.length;
   const wins=games.filter(g=>g.outcome==='win').length;
   const losses=total-wins;
@@ -1305,7 +1428,8 @@ function renderOverall(){
   </div>`:''}`;
 }
 
-function renderByRole(type){
+function renderByRole(type,gamesList){
+  const games=gamesList;
   const map={};
   games.forEach(g=>{
     (type==='partner'?[g.partner]:[g.opp1,g.opp2]).forEach(k=>{
@@ -1323,7 +1447,8 @@ function renderByRole(type){
   }).join('')||'<div class="empty"><p>No data yet</p></div>';
 }
 
-function renderSessions(){
+function renderSessions(gamesList){
+  const games=gamesList;
   const map={};
   games.forEach(g=>{
     const k=g.sessionId||'solo';
@@ -1343,7 +1468,7 @@ async function renderLeaderboard(){
   const el=document.getElementById('leaderboardContent');
   el.innerHTML='<div class="empty"><p>Loading leaderboard...</p></div>';
   const[gamesRes,profilesRes]=await Promise.all([
-    sb.from('games').select('username,full_name,outcome,amount'),
+    sb.from('games').select('username,full_name,outcome,amount,ts'),
     sb.from('profiles').select('username,stats_private')
   ]);
   const{data,error}=gamesRes;
@@ -1356,8 +1481,14 @@ async function renderLeaderboard(){
     el.innerHTML='<div class="empty"><div class="big">♣</div><p>No games on the leaderboard yet.</p></div>';
     return;
   }
+  const seasonId=document.getElementById('lbSeason')?.value||'all';
+  const seasonData=getGamesForSeason(seasonId,data);
+  if(!seasonData.length){
+    el.innerHTML='<div class="empty"><div class="big">♣</div><p>No games on the leaderboard for this season yet.</p></div>';
+    return;
+  }
   const map={};
-  data.forEach(g=>{
+  seasonData.forEach(g=>{
     if(!g.username)return;
     if(privateUsers.has(g.username)&&g.username!==currentUsername)return;
     if(!map[g.username])map[g.username]={username:g.username,games:0,wins:0,losses:0,net:0,bigWin:null,bigLoss:null};
@@ -1564,8 +1695,11 @@ async function showPlayerStats(username){
     document.getElementById('modal').style.display='flex';
     return;
   }
-  const{data,error}=await sb.from('games').select('outcome,amount,partner,opp1,opp2').eq('username',username);
-  if(error||!data||!data.length){showToast('No data found');return}
+  const{data:rawData,error}=await sb.from('games').select('outcome,amount,partner,opp1,opp2,ts').eq('username',username);
+  if(error||!rawData||!rawData.length){showToast('No data found');return}
+  const seasonId=document.getElementById('lbSeason')?.value||'all';
+  const data=getGamesForSeason(seasonId,rawData);
+  if(!data.length){showToast('No games in this season');return}
   const total=data.length;
   const wins=data.filter(g=>g.outcome==='win').length;
   const losses=total-wins;
@@ -1855,32 +1989,47 @@ function closeAdminModal(){
   document.getElementById('adminModal').style.display='none';
 }
 
-async function renderWrapped(){
-  const wrappedReleaseDate = new Date('2026-08-17T00:00:00');
-  if(new Date() < wrappedReleaseDate && currentUsername!=='JCohn'){
+async function renderWrapped(editionId){
+  const explicitEdition = editionId!==undefined && editionId!==null;
+  const defaultEdition = getDefaultWrappedEdition();
+  if(!explicitEdition && defaultEdition===null){
+    const next=getNextWrappedEdition();
+    const dateStr=next?next.releaseDate.toLocaleDateString('en-US',{month:'long',day:'numeric'}):null;
+    const gateMessage=next?`Check back ${dateStr} for your ${next.label}.`:'Check back soon for your next Wrapped.';
     document.getElementById('wrappedContent').innerHTML=`
+      ${buildWrappedEditionSelectorHtml(null,true)}
       <div style="text-align:center;padding:60px 20px">
         <div style="font-size:48px;margin-bottom:16px">🎴</div>
-        <div style="font-size:22px;font-weight:700;color:var(--purple2);margin-bottom:8px;font-family:'IBM Plex Sans',sans-serif !important">Summer 2026 Wrapped</div>
-        <div style="font-size:14px;color:var(--text2);line-height:1.6;font-family:'IBM Plex Sans',sans-serif !important">Drops August 17th.<br>Your summer stats are being compiled.</div>
+        <div style="font-size:22px;font-weight:700;color:var(--purple2);margin-bottom:8px;font-family:'IBM Plex Sans',sans-serif !important">Wrapped</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.6;font-family:'IBM Plex Sans',sans-serif !important">${gateMessage}</div>
       </div>`;
     return;
   }
+  const activeEditionId = explicitEdition ? editionId : defaultEdition.id;
+  const wrappedEdition=WRAPPED_EDITIONS.find(e=>e.id===activeEditionId);
+  const wrappedSeasonLabel=wrappedEdition?wrappedEdition.label:'All Time';
+  const wrappedEditionSelectorHtml=buildWrappedEditionSelectorHtml(activeEditionId,false);
   const el=document.getElementById('wrappedContent');
   if(!currentUser){
-    el.innerHTML='<div class="empty"><div class="big">🎴</div><p>Sign in to see your Summer 2026 Wrapped.</p></div>';
+    el.innerHTML=`<div class="empty"><div class="big">🎴</div><p>Sign in to see your ${wrappedSeasonLabel} Wrapped.</p></div>`;
     return;
   }
-  if(!games.length){
+  const filteredGames=getGamesForEdition(activeEditionId,games);
+  if(!filteredGames.length){
     el.innerHTML='<div class="empty"><div class="big">🎴</div><p>Log some games first to see your Wrapped.</p></div>';
     return;
   }
   el.innerHTML='<div class="empty"><p>Loading your Wrapped...</p></div>';
 
   const{data:allGamesData}=await sb.from('games').select('username,full_name,outcome,amount,stake1,stake2,partner,opp1,opp2,ts');
-  const allGames=allGamesData||[];
+  const allGames=getGamesForEdition(activeEditionId,allGamesData||[]);
   const verifiedGames=allGames.filter(g=>VERIFIED_USERS.has(g.username));
 
+  // Everything below is wrapped in its own block so the `games` declared here shadows only
+  // within it — this edition's filtered set — without touching the top-level `games` array
+  // (the current user's full local history) used elsewhere in the app.
+  {
+  const games=filteredGames;
   const total=games.length;
   const wins=games.filter(g=>g.outcome==='win').length;
   const losses=total-wins;
@@ -2021,8 +2170,9 @@ async function renderWrapped(){
     </div>`;
 
   el.innerHTML=`
+    ${wrappedEditionSelectorHtml}
     <div style="text-align:center;padding:24px 0 20px">
-      <div style="font-size:28px;font-weight:700;color:var(--purple2);font-family:'IBM Plex Sans',sans-serif !important">Summer 2026</div>
+      <div style="font-size:28px;font-weight:700;color:var(--purple2);font-family:'IBM Plex Sans',sans-serif !important">${wrappedSeasonLabel}</div>
       <div style="font-size:14px;color:var(--text2);margin-top:4px;font-family:'IBM Plex Sans',sans-serif !important">Your Euchre Wrapped</div>
     </div>
 
@@ -2174,7 +2324,7 @@ async function renderWrapped(){
       <div style="font-size:13px;color:var(--text2);line-height:1.6;font-family:'IBM Plex Sans',sans-serif !important">${p.desc}</div>
     </div>
 
-    <div style="text-align:center;padding:16px 0 8px;color:var(--text3);font-size:11px;font-family:'IBM Plex Sans',sans-serif !important">Summer 2026 · EuchreTracker</div>
+    <div style="text-align:center;padding:16px 0 8px;color:var(--text3);font-size:11px;font-family:'IBM Plex Sans',sans-serif !important">${wrappedSeasonLabel} · EuchreTracker</div>
 
     ${(()=>{
       if(!allGames.length)return '';
@@ -2247,7 +2397,7 @@ async function renderWrapped(){
         return tb/bw.length;
       })();
 
-      return wCard('Summer 2026 · Group Stats',`
+      return wCard(wrappedSeasonLabel+' · Group Stats',`
         <div style="font-size:10px;font-weight:700;color:var(--purple2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-family:'IBM Plex Sans',sans-serif !important">Overall</div>
         ${statRow('Total Games Logged',totalGamesAll)}
         ${statRow('Total Wins / Losses',totalWins+'W · '+totalLosses+'L')}
@@ -2289,8 +2439,9 @@ async function renderWrapped(){
     }
     dayBuckets[dayIndex[dayKey]].net+=g.amount;
   });
+  const showIntersessionAnnotation=activeEditionId==='summer-2026';
   const intersessionDate=new Date(2026,6,25).getTime();
-  if(!dayBuckets.some(b=>b.date===intersessionDate)){
+  if(showIntersessionAnnotation && !dayBuckets.some(b=>b.date===intersessionDate)){
     dayBuckets.push({date:intersessionDate,label:'Jul 25',net:0});
     dayBuckets.sort((a,b)=>a.date-b.date);
   }
@@ -2323,27 +2474,29 @@ async function renderWrapped(){
         responsive:true,
         plugins:{
           legend:{display:false},
-          annotation:{
-            annotations:{
-              intersession:{
-                type:'line',
-                xMin:'Jul 25',
-                xMax:'Jul 25',
-                borderColor:'rgba(167,139,250,0.6)',
-                borderWidth:1.5,
-                borderDash:[4,4],
-                label:{
-                  content:'Intersession',
-                  display:true,
-                  position:'start',
-                  color:'#a78bfa',
-                  font:{size:9,weight:'bold'},
-                  backgroundColor:'rgba(30,16,48,0.8)',
-                  padding:{x:4,y:2}
+          ...(showIntersessionAnnotation?{
+            annotation:{
+              annotations:{
+                intersession:{
+                  type:'line',
+                  xMin:'Jul 25',
+                  xMax:'Jul 25',
+                  borderColor:'rgba(167,139,250,0.6)',
+                  borderWidth:1.5,
+                  borderDash:[4,4],
+                  label:{
+                    content:'Intersession',
+                    display:true,
+                    position:'start',
+                    color:'#a78bfa',
+                    font:{size:9,weight:'bold'},
+                    backgroundColor:'rgba(30,16,48,0.8)',
+                    padding:{x:4,y:2}
+                  }
                 }
               }
             }
-          },
+          }:{}),
           tooltip:{
             callbacks:{
               label:ctx=>'Net: '+formatAmt(ctx.parsed.y)
@@ -2371,18 +2524,25 @@ async function renderWrapped(){
       }
     });
   }
-}
-
-function maybeShowWrappedAnnouncement(){
-  const released=new Date()>=new Date('2026-08-17T00:00:00');
-  const seen=localStorage.getItem('euchre_wrapped_2026_seen');
-  if(released&&!seen){
-    document.getElementById('wrappedAnnouncementModal').style.display='flex';
   }
 }
 
+function maybeShowWrappedAnnouncement(){
+  const edition=getDefaultWrappedEdition();
+  if(!edition)return;
+  const seenKey='euchre_wrapped_seen_'+edition.id;
+  if(localStorage.getItem(seenKey))return;
+  const label=edition.label.toLowerCase().includes('wrapped')?edition.label:edition.label+' Wrapped';
+  const titleEl=document.getElementById('wrappedAnnounceTitle');
+  const bodyEl=document.getElementById('wrappedAnnounceBody');
+  if(titleEl)titleEl.textContent=label+' is here';
+  if(bodyEl)bodyEl.textContent='Your full stats are ready. See how you stacked up, your best partners, biggest wins, and more.';
+  document.getElementById('wrappedAnnouncementModal').style.display='flex';
+}
+
 function dismissWrappedAnnouncement(navigate){
-  localStorage.setItem('euchre_wrapped_2026_seen','1');
+  const edition=getDefaultWrappedEdition();
+  if(edition)localStorage.setItem('euchre_wrapped_seen_'+edition.id,'1');
   document.getElementById('wrappedAnnouncementModal').style.display='none';
   if(navigate)showPage('wrapped');
 }
