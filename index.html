@@ -339,7 +339,6 @@ html.theme-light-green{
     <div class="tabs-inner">
       <button class="tab-inner active" onclick="showAdminTab('users')">Users</button>
       <button class="tab-inner" onclick="showAdminTab('games')">Games</button>
-      <button class="tab-inner" onclick="showPage('wrapped')">Preview Wrapped 🎴</button>
     </div>
     <div id="adminContent"></div>
   </div>
@@ -596,7 +595,7 @@ const SEASONS = [
     id: 'summer-2026',
     label: 'Summer 2026',
     type: 'summer',
-    start: new Date('2026-06-01T00:00:00'),
+    start: new Date('2026-06-10T00:00:00'),
     end: new Date('2026-08-16T23:59:59')
   },
   {
@@ -633,6 +632,17 @@ function getGamesForSeason(seasonId, sourceGames){
   return list.filter(g => getSeasonForDate(g.ts)?.id === seasonId);
 }
 
+// Shared display-string helper so the date range next to a season's label (dropdowns, the
+// header badge) isn't formatted three different ways in three different places.
+function formatSeasonRange(season){
+  const startStr = season.start.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const now = new Date();
+  const isOngoing = now >= season.start && now <= season.end;
+  if(isOngoing) return startStr + ' - present';
+  const endStr = season.end.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return startStr + ' - ' + endStr;
+}
+
 // Future editions (summer-2027, 2027, etc.) get appended here the same way — no other code
 // changes are needed when that happens; the gate, countdown, defaulting, and past-editions
 // selector all derive purely from this list.
@@ -640,7 +650,7 @@ const WRAPPED_EDITIONS = [
   {
     id: 'summer-2026',
     label: 'Summer 2026',
-    dataStart: new Date('2026-06-01T00:00:00'),
+    dataStart: new Date('2026-06-10T00:00:00'),
     dataEnd: new Date('2026-08-16T23:59:59'),
     releaseDate: new Date('2026-08-17T00:00:00'),
     defaultUntil: new Date('2026-09-30T23:59:59')
@@ -648,7 +658,7 @@ const WRAPPED_EDITIONS = [
   {
     id: '2026',
     label: '2026 Wrapped',
-    dataStart: new Date('2026-06-01T00:00:00'), // data actually starts June since that's when tracking began, even though this is the "2026" full-year edition
+    dataStart: new Date('2026-06-10T00:00:00'), // data actually starts June 10 since that's when tracking began, even though this is the "2026" full-year edition
     dataEnd: new Date('2026-12-31T23:59:59'),
     releaseDate: new Date('2027-01-01T00:00:00'),
     defaultUntil: new Date('2027-01-31T23:59:59')
@@ -682,6 +692,17 @@ function getGamesForEdition(editionId, sourceGames){
   });
 }
 
+// Parallel to formatSeasonRange, but for WRAPPED_EDITIONS entries, which use
+// dataStart/dataEnd instead of start/end.
+function formatWrappedEditionRange(edition){
+  const startStr = edition.dataStart.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const now = new Date();
+  const isOngoing = now >= edition.dataStart && now <= edition.dataEnd;
+  if(isOngoing) return startStr + ' - present';
+  const endStr = edition.dataEnd.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return startStr + ' - ' + endStr;
+}
+
 // Builds the "View Past Wrapped" dropdown. Shown on the gate screen whenever at least one
 // edition has released, and on a normal Wrapped view whenever more than one edition has
 // released (so there's actually something to switch between).
@@ -690,7 +711,7 @@ function buildWrappedEditionSelectorHtml(activeEditionId, isGate){
   if(!released.length) return '';
   if(!isGate && released.length <= 1) return '';
   const placeholder = isGate ? '<option value="" disabled selected>View Past Wrapped</option>' : '';
-  const options = released.map(e => `<option value="${e.id}" ${!isGate && e.id===activeEditionId ? 'selected' : ''}>${e.label}</option>`).join('');
+  const options = released.map(e => `<option value="${e.id}" ${!isGate && e.id===activeEditionId ? 'selected' : ''}>${e.label} (${formatWrappedEditionRange(e)})</option>`).join('');
   return `<select onchange="if(this.value)renderWrapped(this.value)" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif !important;font-size:13px;padding:7px 11px;border-radius:var(--r);outline:none;cursor:pointer;width:100%;margin-bottom:14px">${placeholder}${options}</select>`;
 }
 
@@ -698,7 +719,23 @@ let DB, games=[], currentSession=null, currentOutcome=null, activeStatTab='overa
 let robinMode=false, robinGames=[];
 
 const currentSeasonBadgeEl=document.getElementById('currentSeasonBadge');
-if(currentSeasonBadgeEl)currentSeasonBadgeEl.textContent='Current Season: '+getCurrentSeason().label;
+if(currentSeasonBadgeEl){
+  const currentSeasonForBadge=getCurrentSeason();
+  currentSeasonBadgeEl.innerHTML='Current Season: '+currentSeasonForBadge.label+' <span style="opacity:0.7;font-weight:400">('+formatSeasonRange(currentSeasonForBadge)+')</span>';
+}
+
+// Appends each season's date range to its <option> text in the season-selector dropdowns.
+// Done once at load (not on every render) so it doesn't clobber the user's current selection.
+function appendSeasonRangesToSelect(selectId){
+  const el=document.getElementById(selectId);
+  if(!el)return;
+  SEASONS.forEach(s=>{
+    const opt=el.querySelector('option[value="'+s.id+'"]');
+    if(opt)opt.textContent=s.label+' ('+formatSeasonRange(s)+')';
+  });
+}
+appendSeasonRangesToSelect('statsSeason');
+appendSeasonRangesToSelect('lbSeason');
 
 function openDB(){
   return new Promise((res,rej)=>{
@@ -2173,7 +2210,7 @@ async function renderWrapped(editionId){
     ${wrappedEditionSelectorHtml}
     <div style="text-align:center;padding:24px 0 20px">
       <div style="font-size:28px;font-weight:700;color:var(--purple2);font-family:'IBM Plex Sans',sans-serif !important">${wrappedSeasonLabel}</div>
-      <div style="font-size:14px;color:var(--text2);margin-top:4px;font-family:'IBM Plex Sans',sans-serif !important">Your Euchre Wrapped</div>
+      <div style="font-size:14px;color:var(--text2);margin-top:4px;font-family:'IBM Plex Sans',sans-serif !important">Your Euchre Wrapped${wrappedEdition?' ('+formatWrappedEditionRange(wrappedEdition)+')':''}</div>
     </div>
 
     ${wCard('Net Over Time',`
