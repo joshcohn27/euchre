@@ -737,6 +737,19 @@ function appendSeasonRangesToSelect(selectId){
 appendSeasonRangesToSelect('statsSeason');
 appendSeasonRangesToSelect('lbSeason');
 
+// Default both season selectors (and Stats' filter state) to the current season rather than
+// "All Time". Derived from getCurrentSeason() rather than hardcoded so this keeps resolving
+// to the right season after future boundary flips. "All Time" stays selectable, just not the
+// default. Only applies when the current season actually has a matching <option>.
+(function setDefaultSeasonSelection(){
+  const defaultSeasonId=getCurrentSeason().id;
+  ['statsSeason','lbSeason'].forEach(selectId=>{
+    const el=document.getElementById(selectId);
+    if(el&&el.querySelector('option[value="'+defaultSeasonId+'"]'))el.value=defaultSeasonId;
+  });
+  activeStatSeason=defaultSeasonId;
+})();
+
 function openDB(){
   return new Promise((res,rej)=>{
     const r=indexedDB.open('euchrePro',4);
@@ -1501,11 +1514,31 @@ function renderSessions(gamesList){
   }).join('');
 }
 
+// Supabase/PostgREST caps an unpaginated select at 1000 rows. The leaderboard has to pull
+// every user's games with no per-user filter, so once the table passes 1000 rows that cap
+// silently truncates the response, PostgREST's default (unordered) response drops the newest
+// rows. Since only the most recent games can belong to the current season, that truncation
+// makes the current season look empty on the leaderboard while season-filtered per-user
+// queries (like Stats' fetchGames) stay well under the cap and are unaffected. Page through in
+// batches of 1000 so the leaderboard always sees the full table.
+async function fetchAllLeaderboardGames(){
+  const pageSize=1000;
+  let all=[],from=0;
+  while(true){
+    const{data,error}=await sb.from('games').select('username,full_name,outcome,amount,ts').order('ts',{ascending:false}).range(from,from+pageSize-1);
+    if(error)return{data:null,error};
+    all=all.concat(data||[]);
+    if(!data||data.length<pageSize)break;
+    from+=pageSize;
+  }
+  return{data:all,error:null};
+}
+
 async function renderLeaderboard(){
   const el=document.getElementById('leaderboardContent');
   el.innerHTML='<div class="empty"><p>Loading leaderboard...</p></div>';
   const[gamesRes,profilesRes]=await Promise.all([
-    sb.from('games').select('username,full_name,outcome,amount,ts'),
+    fetchAllLeaderboardGames(),
     sb.from('profiles').select('username,stats_private')
   ]);
   const{data,error}=gamesRes;
